@@ -722,12 +722,6 @@ const getInitialActiveListInfo = () => {
       if (lower === 'flagged email' || lower === 'flagged') return { id: 'flagged', title: 'Flagged email' };
       if (lower === 'tasks') return { id: 'tasks', title: 'Tasks' };
 
-      const match = DEFAULT_CUSTOM_LISTS.find(
-        (c) => c.id === listParam || c.name.toLowerCase() === lower
-      );
-      if (match) {
-        return { id: match.id, title: match.name };
-      }
       return {
         id: listParam || 'cl-custom-' + lower.replace(/[^a-z0-9]/g, '-'),
         title: rawTitle
@@ -737,25 +731,71 @@ const getInitialActiveListInfo = () => {
   return { id: 'my-day', title: 'My Day' };
 };
 
+// ----------------------------------------------------
+// Dynamic User Session & Storage Isolation
+// Ensures each user/device has a completely independent session
+// ----------------------------------------------------
+const getUserSession = () => {
+  if (typeof window === 'undefined') {
+    return { userId: 'primary_user', isPrimaryUser: true };
+  }
+  try {
+    let userId = localStorage.getItem('myday_active_user_id');
+    const hasLegacyData = Boolean(
+      localStorage.getItem('myday_tasks_v4') ||
+      localStorage.getItem('myday_custom_lists_v4') ||
+      localStorage.getItem('myday_user_email') ||
+      localStorage.getItem('todo_list_members_v2')
+    );
+
+    if (!userId) {
+      if (hasLegacyData) {
+        // User A / Existing user with preserved data
+        userId = 'primary_user';
+      } else {
+        // Brand new user / recipient of shared link
+        userId = 'user_' + Date.now().toString(36) + '_' + Math.random().toString(36).substring(2, 6);
+      }
+      localStorage.setItem('myday_active_user_id', userId);
+    }
+
+    const isPrimaryUser = userId === 'primary_user' || (userId.startsWith('primary') && hasLegacyData);
+    return { userId, isPrimaryUser };
+  } catch {
+    return { userId: 'primary_user', isPrimaryUser: true };
+  }
+};
+
 export default function App() {
   const initialListInfo = useRef(getInitialActiveListInfo()).current;
+  const userSession = useRef(getUserSession()).current;
+  const { userId, isPrimaryUser } = userSession;
 
   // Theme state
   const [theme, setTheme] = useState(() => {
     return localStorage.getItem('myday_theme') || 'light';
   });
 
-  // Tasks state
+  // Tasks state - Isolated per user session
   const [tasks, setTasks] = useState(() => {
     try {
-      const saved = localStorage.getItem('myday_tasks_v4');
-      if (saved) {
-        const parsed = JSON.parse(saved);
-        if (Array.isArray(parsed) && parsed.length > 0) return parsed;
+      const userScopedSaved = localStorage.getItem(`myday_${userId}_tasks`);
+      if (userScopedSaved) {
+        const parsed = JSON.parse(userScopedSaved);
+        if (Array.isArray(parsed)) return parsed;
       }
-      return INITIAL_TASKS;
+      if (isPrimaryUser) {
+        const legacySaved = localStorage.getItem('myday_tasks_v4') || localStorage.getItem('myday_tasks');
+        if (legacySaved) {
+          const parsed = JSON.parse(legacySaved);
+          if (Array.isArray(parsed) && parsed.length > 0) return parsed;
+        }
+        return INITIAL_TASKS;
+      }
+      // Fresh new user gets empty task list
+      return [];
     } catch {
-      return INITIAL_TASKS;
+      return isPrimaryUser ? INITIAL_TASKS : [];
     }
   });
 
@@ -796,36 +836,50 @@ export default function App() {
   const [selectedCalendarDate, setSelectedCalendarDate] = useState(() => new Date());
   const [selectedReminderTime, setSelectedReminderTime] = useState('09:00 AM');
 
-  // Custom User Lists (Below Underline - defaults match screenshot)
+  // Custom User Lists (Below Underline - isolated per user)
   const [customLists, setCustomLists] = useState(() => {
-    let lists = DEFAULT_CUSTOM_LISTS;
+    let lists = [];
     try {
-      const saved = localStorage.getItem('myday_custom_lists_v4') || localStorage.getItem('myday_custom_lists');
-      if (saved) {
-        const parsed = JSON.parse(saved);
-        if (Array.isArray(parsed) && parsed.length > 0) {
-          const sanitized = parsed.map((item, idx) => {
-            const name = getSafeListName(item);
-            if (!name) return null;
-            const emoji = getSafeListEmoji(item);
-            const id = (item && typeof item === 'object' && typeof item.id === 'string')
-              ? item.id
-              : 'cl-' + idx + '-' + Date.now();
-            return {
-              id,
-              name,
-              emoji,
-              shared: item && typeof item === 'object' ? Boolean(item.shared) : false,
-              count: item && typeof item === 'object' && typeof item.count === 'number' ? item.count : 0
-            };
-          }).filter(Boolean);
-
-          if (sanitized.length > 0) {
-            lists = sanitized;
-          }
+      const userScopedSaved = localStorage.getItem(`myday_${userId}_custom_lists`);
+      if (userScopedSaved) {
+        const parsed = JSON.parse(userScopedSaved);
+        if (Array.isArray(parsed)) {
+          lists = parsed;
         }
+      } else if (isPrimaryUser) {
+        const legacySaved = localStorage.getItem('myday_custom_lists_v4') || localStorage.getItem('myday_custom_lists');
+        if (legacySaved) {
+          const parsed = JSON.parse(legacySaved);
+          if (Array.isArray(parsed) && parsed.length > 0) {
+            lists = parsed;
+          } else {
+            lists = DEFAULT_CUSTOM_LISTS;
+          }
+        } else {
+          lists = DEFAULT_CUSTOM_LISTS;
+        }
+      } else {
+        lists = [];
       }
-    } catch { }
+    } catch {
+      lists = isPrimaryUser ? DEFAULT_CUSTOM_LISTS : [];
+    }
+
+    const sanitized = lists.map((item, idx) => {
+      const name = getSafeListName(item);
+      if (!name) return null;
+      const emoji = getSafeListEmoji(item);
+      const id = (item && typeof item === 'object' && typeof item.id === 'string')
+        ? item.id
+        : 'cl-' + idx + '-' + Date.now();
+      return {
+        id,
+        name,
+        emoji,
+        shared: item && typeof item === 'object' ? Boolean(item.shared) : false,
+        count: item && typeof item === 'object' && typeof item.count === 'number' ? item.count : 0
+      };
+    }).filter(Boolean);
 
     // If opening via shared URL, make sure the shared list exists in customLists so it displays in Drawer
     const isSystem =
@@ -836,20 +890,17 @@ export default function App() {
       initialListInfo.title === 'Assigned to me' ||
       initialListInfo.title === 'Flagged email';
 
-    if (!isSystem && !lists.some((item) => getSafeListName(item).toLowerCase() === initialListInfo.title.toLowerCase())) {
-      lists = [
-        ...lists,
-        {
-          id: initialListInfo.id,
-          name: initialListInfo.title,
-          emoji: '📋',
-          shared: true,
-          count: 0
-        }
-      ];
+    if (!isSystem && !sanitized.some((item) => getSafeListName(item).toLowerCase() === initialListInfo.title.toLowerCase())) {
+      sanitized.push({
+        id: initialListInfo.id,
+        name: initialListInfo.title,
+        emoji: '📋',
+        shared: true,
+        count: 0
+      });
     }
 
-    return lists;
+    return sanitized;
   });
   const [isCreatingList, setIsCreatingList] = useState(false);
   const [newListNameInput, setNewListNameInput] = useState('');
@@ -909,39 +960,145 @@ export default function App() {
   // ----------------------------------------------------
   const [isShareListOpen, setIsShareListOpen] = useState(false);
   const [isShareListClosing, setIsShareListClosing] = useState(false);
+
+  // User Account & Email (shown at top of Lists screen, isolated per user)
+  const [userEmail, setUserEmail] = useState(() => {
+    try {
+      const userScopedSaved = localStorage.getItem(`myday_${userId}_email`);
+      if (userScopedSaved && userScopedSaved.trim()) {
+        return userScopedSaved.trim();
+      }
+      if (isPrimaryUser) {
+        const legacy = localStorage.getItem('myday_user_email');
+        if (legacy && legacy.trim() && legacy !== 'pink1@gmail.com') {
+          return legacy.trim();
+        }
+        return 'pinkisummarwal@gmail.com';
+      }
+      const numPart = Math.floor(1000 + Math.random() * 9000);
+      const dynamicEmail = `user_${numPart}@todo.app`;
+      try {
+        localStorage.setItem(`myday_${userId}_email`, dynamicEmail);
+      } catch { }
+      return dynamicEmail;
+    } catch {
+      return isPrimaryUser ? 'pinkisummarwal@gmail.com' : 'user@todo.app';
+    }
+  });
+
   const [listMembers, setListMembers] = useState(() => {
     try {
-      const saved = localStorage.getItem('todo_list_members_v2');
-      if (saved) return JSON.parse(saved);
-    } catch { }
-    return [
-      {
-        id: 'member-1',
-        name: 'ASHISH JAJORIA',
-        email: 'ashish.jajoria@gmail.com',
-        initials: 'AJ',
-        color: '#8b1d24', // Red avatar matching screenshot
-        role: 'Owner'
-      },
-      {
-        id: 'member-2',
-        name: 'pinkisummarwal@gmail.com',
-        email: 'pinkisummarwal@gmail.com',
-        initials: 'P',
-        color: '#0d7a71', // Teal avatar matching screenshot
-        role: 'Member'
+      const userScopedSaved = localStorage.getItem(`myday_${userId}_members`);
+      if (userScopedSaved) {
+        const parsed = JSON.parse(userScopedSaved);
+        if (Array.isArray(parsed) && parsed.length > 0) return parsed;
       }
-    ];
+      if (isPrimaryUser) {
+        const legacy = localStorage.getItem('todo_list_members_v2');
+        if (legacy) {
+          const parsed = JSON.parse(legacy);
+          if (Array.isArray(parsed) && parsed.length > 0) return parsed;
+        }
+        return [
+          {
+            id: 'member-1',
+            name: 'ASHISH JAJORIA',
+            email: 'ashish.jajoria@gmail.com',
+            initials: 'AJ',
+            color: '#8b1d24', // Red avatar matching screenshot
+            role: 'Owner'
+          },
+          {
+            id: 'member-2',
+            name: 'pinkisummarwal@gmail.com',
+            email: 'pinkisummarwal@gmail.com',
+            initials: 'P',
+            color: '#0d7a71', // Teal avatar matching screenshot
+            role: 'Member'
+          }
+        ];
+      }
+      return [
+        {
+          id: `member-${userId}`,
+          name: userEmail || 'My Account',
+          email: userEmail || 'user@todo.app',
+          initials: (userEmail || 'U').trim().charAt(0).toUpperCase() || 'U',
+          color: '#0d7a71',
+          role: 'Owner'
+        }
+      ];
+    } catch { }
+    return isPrimaryUser
+      ? [
+          {
+            id: 'member-1',
+            name: 'ASHISH JAJORIA',
+            email: 'ashish.jajoria@gmail.com',
+            initials: 'AJ',
+            color: '#8b1d24',
+            role: 'Owner'
+          },
+          {
+            id: 'member-2',
+            name: 'pinkisummarwal@gmail.com',
+            email: 'pinkisummarwal@gmail.com',
+            initials: 'P',
+            color: '#0d7a71',
+            role: 'Member'
+          }
+        ]
+      : [
+          {
+            id: `member-${userId}`,
+            name: userEmail || 'My Account',
+            email: userEmail || 'user@todo.app',
+            initials: (userEmail || 'U').trim().charAt(0).toUpperCase() || 'U',
+            color: '#0d7a71',
+            role: 'Owner'
+          }
+        ];
   });
   const [isInvitingEmail, setIsInvitingEmail] = useState(false);
   const [inviteEmailInput, setInviteEmailInput] = useState('');
 
+  // Persist userEmail
+  useEffect(() => {
+    try {
+      localStorage.setItem(`myday_${userId}_email`, userEmail);
+      if (isPrimaryUser) {
+        localStorage.setItem('myday_user_email', userEmail);
+      }
+    } catch { }
+  }, [userEmail, userId, isPrimaryUser]);
+
+  // Sync Owner member info with dynamic userEmail for non-primary users
+  useEffect(() => {
+    if (!isPrimaryUser && userEmail) {
+      setListMembers((prev) =>
+        prev.map((m) =>
+          m.role === 'Owner'
+            ? {
+                ...m,
+                name: userEmail,
+                email: userEmail,
+                initials: userEmail.trim().charAt(0).toUpperCase() || 'U'
+              }
+            : m
+        )
+      );
+    }
+  }, [userEmail, isPrimaryUser]);
+
   // Persist list members
   useEffect(() => {
     try {
-      localStorage.setItem('todo_list_members_v2', JSON.stringify(listMembers));
+      localStorage.setItem(`myday_${userId}_members`, JSON.stringify(listMembers));
+      if (isPrimaryUser) {
+        localStorage.setItem('todo_list_members_v2', JSON.stringify(listMembers));
+      }
     } catch { }
-  }, [listMembers]);
+  }, [listMembers, userId, isPrimaryUser]);
 
   const closeShareList = () => {
     setIsShareListClosing(true);
@@ -970,9 +1127,12 @@ export default function App() {
   };
 
   const getShareListUrl = () => {
-    // Live GitHub Pages production URL - Accessible anywhere in the world!
-    const GITHUB_PAGES_BASE = 'https://pinkijajoria.github.io/todo-app/';
-    return `${GITHUB_PAGES_BASE}?list=${encodeURIComponent(listTitle)}`;
+    // Return clean base URL so recipient opens a fresh, independent app state
+    if (typeof window !== 'undefined' && window.location.origin) {
+      const path = window.location.pathname.endsWith('/') ? window.location.pathname : window.location.pathname + '/';
+      return `${window.location.origin}${path}`;
+    }
+    return 'https://pinkijajoria.github.io/todo-app/';
   };
 
   const getListSharePayload = () => {
@@ -1132,34 +1292,29 @@ export default function App() {
     }
   };
 
-  // User Account & Email (shown at top of Lists screen, defaults to pinkisummarwal@gmail.com from screenshot)
-  const [userEmail, setUserEmail] = useState(() => {
-    const saved = localStorage.getItem('myday_user_email');
-    if (!saved || saved === 'pink1@gmail.com') {
-      return 'pinkisummarwal@gmail.com';
-    }
-    return saved;
-  });
-  const [isEditingEmail, setIsEditingEmail] = useState(false);
-  const [tempEmail, setTempEmail] = useState('');
-
-  // Persist tasks and customLists
+  // Persist tasks and customLists per user session
   useEffect(() => {
     try {
-      localStorage.setItem('myday_tasks_v4', JSON.stringify(tasks));
-      localStorage.setItem('myday_tasks', JSON.stringify(tasks));
+      localStorage.setItem(`myday_${userId}_tasks`, JSON.stringify(tasks));
+      if (isPrimaryUser) {
+        localStorage.setItem('myday_tasks_v4', JSON.stringify(tasks));
+        localStorage.setItem('myday_tasks', JSON.stringify(tasks));
+      }
     } catch (e) {
       console.error('Failed to save tasks', e);
     }
-  }, [tasks]);
+  }, [tasks, userId, isPrimaryUser]);
 
   useEffect(() => {
     try {
-      localStorage.setItem('myday_custom_lists_v4', JSON.stringify(customLists));
+      localStorage.setItem(`myday_${userId}_custom_lists`, JSON.stringify(customLists));
+      if (isPrimaryUser) {
+        localStorage.setItem('myday_custom_lists_v4', JSON.stringify(customLists));
+      }
     } catch (e) {
       console.error('Failed to save custom lists', e);
     }
-  }, [customLists]);
+  }, [customLists, userId, isPrimaryUser]);
 
   const inputRef = useRef(null);
 
@@ -1357,7 +1512,7 @@ export default function App() {
 
         setTimeout(() => {
           // 1. Reload tasks from storage
-          const savedTasks = localStorage.getItem('myday_tasks_v4') || localStorage.getItem('myday_tasks');
+          const savedTasks = localStorage.getItem(`myday_${userId}_tasks`) || (isPrimaryUser ? (localStorage.getItem('myday_tasks_v4') || localStorage.getItem('myday_tasks')) : null);
           if (savedTasks) {
             try {
               const parsedTasks = JSON.parse(savedTasks);
@@ -1365,7 +1520,7 @@ export default function App() {
             } catch (err) { }
           }
           // 2. Reload custom lists from storage
-          const savedLists = localStorage.getItem('myday_custom_lists_v4');
+          const savedLists = localStorage.getItem(`myday_${userId}_custom_lists`) || (isPrimaryUser ? localStorage.getItem('myday_custom_lists_v4') : null);
           if (savedLists) {
             try {
               const parsedLists = JSON.parse(savedLists);
@@ -1603,10 +1758,12 @@ export default function App() {
     localStorage.setItem('myday_theme', theme);
   }, [theme]);
 
-  // Sync tasks to localStorage
+  // Sync tasks to localStorage for primary user legacy compatibility
   useEffect(() => {
-    localStorage.setItem('myday_tasks', JSON.stringify(tasks));
-  }, [tasks]);
+    if (isPrimaryUser) {
+      localStorage.setItem('myday_tasks', JSON.stringify(tasks));
+    }
+  }, [tasks, isPrimaryUser]);
 
   // Listen for PWA install prompt & standalone status
   useEffect(() => {
@@ -3345,7 +3502,10 @@ export default function App() {
                               const updated = [...customLists, newList];
                               setCustomLists(updated);
                               try {
-                                localStorage.setItem('myday_custom_lists_v4', JSON.stringify(updated));
+                                localStorage.setItem(`myday_${userId}_custom_lists`, JSON.stringify(updated));
+                                if (isPrimaryUser) {
+                                  localStorage.setItem('myday_custom_lists_v4', JSON.stringify(updated));
+                                }
                               } catch { }
                             }
                             setTaskDraftList(n);
@@ -3374,7 +3534,10 @@ export default function App() {
                             const updated = [...customLists, newList];
                             setCustomLists(updated);
                             try {
-                              localStorage.setItem('myday_custom_lists_v4', JSON.stringify(updated));
+                              localStorage.setItem(`myday_${userId}_custom_lists`, JSON.stringify(updated));
+                              if (isPrimaryUser) {
+                                localStorage.setItem('myday_custom_lists_v4', JSON.stringify(updated));
+                              }
                             } catch { }
                           }
                           setTaskDraftList(n);
@@ -4392,11 +4555,22 @@ export default function App() {
           }}
         >
 
-          {/* Header matching screenshot: Teal P avatar, email ID, search button, close button */}
+          {/* Header matching screenshot: Teal avatar, email ID, search button, close button */}
           <div className="drawer-header">
-            <div className="drawer-account-box">
+            <div
+              className="drawer-account-box"
+              onClick={() => {
+                const updated = window.prompt('Update account username or email:', userEmail);
+                if (updated && updated.trim()) {
+                  setUserEmail(updated.trim());
+                  showToast('Account updated');
+                }
+              }}
+              style={{ cursor: 'pointer' }}
+              title="Click to edit account username or email"
+            >
               <div className="drawer-account-avatar">
-                {userEmail.trim() ? userEmail.trim().charAt(0).toUpperCase() : 'P'}
+                {userEmail.trim() ? userEmail.trim().charAt(0).toUpperCase() : 'U'}
               </div>
               <span className="drawer-account-email-title">{userEmail}</span>
             </div>
