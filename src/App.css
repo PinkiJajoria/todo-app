@@ -1,0 +1,3662 @@
+/* ========================================================
+   My Day Component Styles
+   ======================================================== */
+
+.myday-app-container {
+  max-width: 680px;
+  margin: 0 auto;
+  width: 100%;
+  height: 100%;
+  height: 100dvh;
+  display: flex;
+  flex-direction: column;
+  position: relative;
+  padding: calc(1.3rem + env(safe-area-inset-top, 0px)) 1.25rem 0;
+  overflow: hidden;
+  background: transparent;
+  box-shadow: none;
+}
+
+@media (min-width: 768px) {
+  .myday-app-container {
+    margin: 1.5rem auto;
+    height: calc(100dvh - 3rem);
+    max-height: calc(100dvh - 3rem);
+    border-radius: var(--radius-lg);
+    background: rgba(15, 23, 42, 0.22);
+    backdrop-filter: blur(24px);
+    -webkit-backdrop-filter: blur(24px);
+    border: 1px solid rgba(255, 255, 255, 0.16);
+    box-shadow: 0 20px 50px rgba(0, 0, 0, 0.25);
+    padding: 1.5rem 1.75rem 0;
+  }
+}
+
+/* Main tasks scrollable viewport area (Native mobile app behavior: screen stays locked) */
+.tasks-main-scroll-area {
+  position: relative;
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-y: auto;
+  overflow-x: hidden;
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior: contain;
+  overscroll-behavior-y: contain;
+  padding-bottom: calc(8.5rem + env(safe-area-inset-bottom, 0px));
+  scrollbar-width: thin;
+  scrollbar-color: rgba(255, 255, 255, 0.18) transparent;
+}
+
+.tasks-main-scroll-area::-webkit-scrollbar {
+  width: 5px;
+}
+
+.tasks-main-scroll-area::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.tasks-main-scroll-area::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.18);
+  border-radius: var(--radius-full);
+}
+
+.tasks-main-scroll-area.scroll-locked {
+  overflow: hidden !important;
+  touch-action: none !important;
+  pointer-events: none !important;
+}
+
+
+/* --------------------------------------------------------
+   Dynamic Parallax Wallpaper Background Layer
+   User Request: "walpaper ko bhi hlka sa croll down kro jab page ko refresh kr rhe h"
+   -------------------------------------------------------- */
+.app-wallpaper-parallax-layer {
+  position: fixed;
+  top: -60px;
+  left: 0;
+  right: 0;
+  bottom: -60px;
+  background-color: #0b0c10;
+  background-image: linear-gradient(rgba(12, 12, 16, 0.38), rgba(12, 12, 16, 0.48)), url('/background.jpg');
+  background-size: cover;
+  background-position: center center;
+  background-repeat: no-repeat;
+  z-index: -1;
+  pointer-events: none;
+  will-change: transform;
+}
+
+/* --------------------------------------------------------
+/* --------------------------------------------------------
+   Native Mobile Style Pull-To-Refresh: Pure Circle Spinner
+   User Request: "refresh hone pe 'refreshed' icon ni dikhana, or sirf cercle hi dikhana h outer hta do"
+   -------------------------------------------------------- */
+.native-pull-refresh-indicator {
+  position: fixed;
+  left: 50%;
+  top: max(18px, calc(14px + env(safe-area-inset-top, 0px)));
+  z-index: 99999;
+  pointer-events: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  will-change: transform, opacity;
+}
+
+.pure-pull-circle-spinner {
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  border: 2.2px solid rgba(255, 255, 255, 0.2);
+  border-top-color: #94a3b8;
+  border-right-color: #94a3b8;
+  background: transparent !important;
+  box-shadow: none !important;
+  filter: drop-shadow(0 1px 4px rgba(0, 0, 0, 0.5));
+  will-change: transform;
+}
+
+.pure-pull-circle-spinner.spin-infinite {
+  animation: nativeAppSpin 0.72s linear infinite;
+}
+
+[data-theme='light'] .pure-pull-circle-spinner {
+  border: 2.2px solid rgba(0, 0, 0, 0.14);
+  border-top-color: #64748b;
+  border-right-color: #64748b;
+  filter: drop-shadow(0 1px 3px rgba(0, 0, 0, 0.2));
+}
+
+@keyframes nativeAppSpin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* Sliding whole page main flow: moves down when pulling, revealing top free space with fixed circle */
+.myday-page-main-flow {
+  flex: 1 1 auto;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  height: 100%;
+  will-change: transform;
+}
+
+/* --------------------------------------------------------
+   Top Bar: Borderless List Button (Upper Left Corner)
+   -------------------------------------------------------- */
+.top-action-bar {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 0.65rem;
+}
+
+/* Specific User Request: "left upper corner pe ek list button bnaao jiska koi border ni h only text h" */
+.borderless-list-btn {
+  border: none !important;
+  background: transparent !important;
+  padding: 0.25rem 0.5rem 0.25rem 0 !important;
+  font-size: 1.05rem;
+  font-weight: 500;
+  color: #f8fafc !important; /* offwhite */
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  cursor: pointer;
+  outline: none;
+  transition: opacity var(--transition-fast), transform var(--transition-fast);
+  user-select: none;
+  text-shadow: 0 1px 4px rgba(0, 0, 0, 0.4);
+}
+
+.borderless-list-btn:hover {
+  opacity: 0.8;
+  transform: translateX(-2px);
+}
+
+.borderless-list-btn:active {
+  transform: scale(0.97);
+}
+
+.top-bar-right {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+/* User Request: "sbse uper right corner pe done ka button di sirf text jiske click pe task add ho jaye oe keyboard hide ho jae" */
+.top-bar-done-btn {
+  background: transparent !important;
+  border: none !important;
+  color: #38bdf8 !important;
+  font-size: 1.08rem !important;
+  font-weight: 600 !important;
+  padding: 0.35rem 0.65rem !important;
+  cursor: pointer !important;
+  border-radius: var(--radius-md) !important;
+  transition: opacity var(--transition-fast), transform var(--transition-fast) !important;
+  user-select: none !important;
+  outline: none !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  touch-action: manipulation !important;
+  -webkit-tap-highlight-color: transparent !important;
+}
+
+.top-bar-done-btn:hover {
+  opacity: 0.82;
+}
+
+.top-bar-done-btn:active {
+  transform: scale(0.94);
+  opacity: 0.7;
+}
+
+.icon-circle-btn {
+  width: 38px;
+  height: 38px;
+  border-radius: var(--radius-full);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #f8fafc;
+  background: rgba(18, 18, 22, 0.55);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.15);
+  transition: all var(--transition-fast);
+  cursor: pointer;
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.icon-circle-btn:hover {
+  background: rgba(18, 18, 22, 0.75);
+  color: #ffffff;
+  transform: scale(1.08);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.25);
+}
+
+.icon-circle-btn:active {
+  transform: scale(0.96);
+}
+
+/* --------------------------------------------------------
+   Header Section: "My Day" & Current Day, Month, Year
+   -------------------------------------------------------- */
+.myday-header {
+  flex-shrink: 0;
+  margin-bottom: 0.85rem;
+}
+
+.myday-header-title-row {
+  display: flex;
+  align-items: center;
+  gap: 0.65rem;
+  margin-bottom: 0.35rem;
+}
+
+.myday-header-icon-wrap {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  filter: drop-shadow(0 2px 8px rgba(0, 0, 0, 0.25));
+}
+
+.myday-title {
+  font-size: 2.25rem;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  color: #f8fafc;
+  line-height: 1.15;
+  margin-bottom: 0;
+  text-shadow: 0 2px 10px rgba(0, 0, 0, 0.28);
+}
+
+/* Black theme matching the lists drawer for Planned, Assigned, Important, Flagged, Tasks */
+.myday-app-container.black-theme-page {
+  background-color: #000000 !important;
+}
+
+@media (min-width: 768px) {
+  .myday-app-container.black-theme-page {
+    background-color: #000000 !important;
+    border: 1px solid rgba(255, 255, 255, 0.12) !important;
+  }
+}
+
+.black-theme-page .myday-title {
+  font-size: 1.85rem !important;
+}
+
+.black-theme-page .task-item-card {
+  background-color: #121214 !important;
+  border: 1px solid rgba(255, 255, 255, 0.1) !important;
+}
+
+.black-theme-page .add-task-card {
+  background: #141416 !important;
+  border: 1px solid rgba(255, 255, 255, 0.14) !important;
+}
+
+.black-theme-page .add-task-card.active,
+.black-theme-page .add-task-card.focused {
+  background: #18181c !important;
+  border-color: rgba(255, 255, 255, 0.28) !important;
+}
+
+.myday-date {
+  font-size: 0.95rem;
+  font-weight: 400;
+  color: #e2e8f0 !important; /* offwhite */
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  text-shadow: 0 1px 4px rgba(0, 0, 0, 0.25);
+}
+
+/* Page empty states for Planned, Important, Assigned to me, etc. */
+.page-empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  padding: 3.5rem 1.5rem;
+  margin-top: 1rem;
+  animation: fadeIn 0.3s ease forwards;
+}
+
+.page-empty-icon-wrap {
+  width: 72px;
+  height: 72px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 1.1rem;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.25);
+}
+
+.page-empty-title {
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: #ffffff;
+  margin-bottom: 0.45rem;
+  letter-spacing: -0.01em;
+}
+
+.page-empty-desc {
+  font-size: 0.92rem;
+  color: #94a3b8;
+  max-width: 290px;
+  line-height: 1.45;
+  margin: 0;
+}
+
+
+.stat-pill {
+  background: var(--bg-hover);
+  padding: 0.2rem 0.6rem;
+  border-radius: var(--radius-full);
+  font-weight: 600;
+  color: var(--text-secondary);
+}
+
+/* --------------------------------------------------------
+   Active Tasks Section
+   -------------------------------------------------------- */
+.tasks-group-title {
+  font-size: 0.82rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--text-muted);
+  margin-bottom: 0.65rem;
+}
+
+.tasks-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  margin-bottom: 1.75rem;
+}
+
+.task-item-card {
+  display: flex;
+  align-items: center;
+  background-color: rgba(18, 18, 22, 0.58);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  border-radius: var(--radius-md);
+  padding: 0;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.2);
+  transition: box-shadow var(--transition-fast), border-color var(--transition-fast);
+  position: relative;
+  overflow: hidden;
+}
+
+.task-item-card:hover {
+  border-color: rgba(255, 255, 255, 0.3);
+  box-shadow: 0 10px 28px rgba(0, 0, 0, 0.28);
+}
+
+.task-item-card.is-completing {
+  transition: opacity 0.28s ease, transform 0.28s cubic-bezier(0.2, 0.9, 0.3, 1), box-shadow 0.2s ease;
+}
+
+.task-item-card.is-exiting {
+  opacity: 0 !important;
+  transform: scale(0.96) translateY(-4px) !important;
+  pointer-events: none;
+}
+
+.task-card-inner-row {
+  display: flex;
+  align-items: center;
+  gap: 0.85rem;
+  width: 100%;
+  padding: 0.85rem 1rem;
+  will-change: transform;
+}
+
+.task-div-delete-slot {
+  position: absolute;
+  right: 0.75rem;
+  top: 0;
+  bottom: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 5;
+  transition: opacity 0.16s ease, transform 0.16s cubic-bezier(0.2, 0.9, 0.3, 1);
+}
+
+/* Tick / Checkbox Button */
+.task-tick-btn {
+  width: 22px;
+  height: 22px;
+  border-radius: var(--radius-full);
+  border: 2px solid rgba(255, 255, 255, 0.35);
+  background: transparent;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+  cursor: pointer;
+  color: #ffffff;
+}
+
+[data-theme='light'] .task-tick-btn {
+  border-color: #94a3b8;
+}
+
+.task-tick-btn:hover {
+  border-color: #3b82f6;
+  background: rgba(59, 130, 246, 0.15);
+  transform: scale(1.08);
+}
+
+/* Checked state: circle fills with vibrant color on tick */
+.task-tick-btn.checked {
+  background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%) !important;
+  border-color: #2563eb !important;
+  color: #ffffff !important;
+  box-shadow: 0 0 10px rgba(37, 99, 235, 0.45);
+  animation: tickBounce 0.24s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+.task-tick-btn.checked:hover {
+  background: linear-gradient(135deg, #60a5fa 0%, #3b82f6 100%) !important;
+  border-color: #3b82f6 !important;
+  box-shadow: 0 0 14px rgba(59, 130, 246, 0.6);
+}
+
+@keyframes tickCheckPop {
+  0% {
+    transform: scale(0);
+    opacity: 0;
+  }
+  60% {
+    transform: scale(1.3);
+    opacity: 1;
+  }
+  100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+.tick-check-icon.animate-pop {
+  animation: tickCheckPop 0.22s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+}
+
+@keyframes tickBounce {
+  0% {
+    transform: scale(0.9);
+  }
+  50% {
+    transform: scale(1.15);
+  }
+  100% {
+    transform: scale(1);
+  }
+}
+
+/* Task Text */
+.task-content {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.task-name {
+  font-size: 0.88rem;
+  font-weight: 400;
+  color: #f8fafc; /* offwhite */
+  word-break: break-word;
+  line-height: 1.35;
+  transition: color var(--transition-fast);
+}
+
+/* Cut / Strikethrough style for completed tasks */
+.task-name.cut {
+  text-decoration: line-through;
+  text-decoration-thickness: 1.5px;
+  text-decoration-color: #94a3b8;
+  color: #94a3b8; /* offwhite muted */
+  opacity: 0.75;
+}
+
+.task-meta-time {
+  font-size: 0.72rem;
+  color: var(--text-muted);
+  margin-top: 0.15rem;
+}
+
+/* Star Button on the Right */
+.task-star-btn {
+  width: 32px;
+  height: 32px;
+  border-radius: var(--radius-full);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--text-muted);
+  flex-shrink: 0;
+  transition: transform var(--transition-fast), color var(--transition-fast);
+}
+
+.task-star-btn:hover {
+  transform: scale(1.18);
+  color: var(--accent-star);
+}
+
+.task-star-btn.starred {
+  color: var(--accent-star);
+}
+
+/* User Request: Delete option inside the card div (Red circle with dustbin) */
+.task-delete-circle-btn {
+  width: 30px;
+  height: 30px;
+  min-width: 30px;
+  min-height: 30px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+  border: 1px solid rgba(255, 255, 255, 0.25);
+  color: #ffffff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 2px 8px rgba(220, 38, 38, 0.35);
+  cursor: pointer;
+  outline: none;
+  transition: transform 0.15s ease, box-shadow 0.15s ease, background 0.15s ease;
+  flex-shrink: 0;
+  padding: 0;
+}
+
+.task-delete-circle-btn:hover {
+  transform: scale(1.08);
+  box-shadow: 0 4px 12px rgba(220, 38, 38, 0.55);
+  background: linear-gradient(135deg, #f87171 0%, #ef4444 100%);
+}
+
+.task-delete-circle-btn:active {
+  transform: scale(0.92);
+}
+
+[data-theme='light'] .task-delete-circle-btn {
+  border: 1px solid rgba(0, 0, 0, 0.08);
+  box-shadow: 0 2px 6px rgba(220, 38, 38, 0.25);
+}
+
+/* --------------------------------------------------------
+   Completed Section: Black Background, White Text Button
+   Specific User Request: "ek completed ka button bnao jiska background black or text white hoga"
+   -------------------------------------------------------- */
+.completed-section {
+  margin-top: 0;
+  margin-bottom: 2rem;
+}
+
+.completed-black-btn {
+  background: rgba(18, 18, 22, 0.65) !important;
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  border-radius: 7px;
+  color: #f8fafc !important; /* offwhite */
+  font-weight: 400;
+  font-size: 0.83rem;
+  padding: 0.32rem 0.52rem;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  border: none;
+  cursor: pointer;
+  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.22), inset 0 1px 0 rgba(255, 255, 255, 0.08);
+  transition: transform var(--transition-fast), background var(--transition-fast), box-shadow var(--transition-fast);
+  user-select: none;
+  margin-bottom: 1rem;
+}
+
+.completed-black-btn:hover {
+  background: rgba(18, 18, 22, 0.82) !important;
+  transform: translateY(-1px);
+  box-shadow: 0 10px 28px rgba(0, 0, 0, 0.3);
+}
+
+.completed-black-btn:active {
+  transform: translateY(1px);
+}
+
+.completed-badge-count {
+  background: rgba(255, 255, 255, 0.25);
+  color: #ffffff;
+  padding: 0.1rem 0.45rem;
+  border-radius: var(--radius-full);
+  font-size: 0.75rem;
+  font-weight: 700;
+}
+
+.completed-chevron {
+  transition: transform 0.25s ease;
+}
+
+.completed-chevron.open {
+  transform: rotate(180deg);
+}
+
+/* Completed items container with smooth slide */
+.completed-tasks-container {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  animation: fadeIn 0.3s ease;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(-6px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* --------------------------------------------------------
+   Bottom "Add a Task" Floating / Docked Input
+   Specific User Request: "bottom me ek plus ke sign ke sath Add a Task ka poora add krne ke liye bnaao"
+   -------------------------------------------------------- */
+.add-task-docked-container {
+  position: fixed;
+  bottom: var(--keyboard-inset, 0px);
+  left: 0;
+  right: 0;
+  padding: 0.65rem 1rem calc(0.75rem + env(safe-area-inset-bottom, 0px));
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+  background: rgba(14, 14, 16, 0.94);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  z-index: 100;
+  display: flex;
+  justify-content: center;
+  pointer-events: none;
+  transition: bottom 0.22s cubic-bezier(0.16, 1, 0.3, 1), padding 0.22s ease;
+}
+
+.add-task-docked-container.active {
+  z-index: 110;
+  border-top-color: transparent;
+  background: transparent;
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+  padding: 0.5rem 1.25rem calc(0.5rem + var(--keyboard-inset, 0px));
+}
+
+@media (max-width: 680px) {
+  .add-task-docked-container.active {
+    padding: 0.45rem 0.85rem calc(0.55rem + var(--keyboard-inset, 0px));
+    bottom: var(--keyboard-inset, 0px);
+  }
+  .add-task-docked-container.active .add-task-wrapper {
+    max-width: 100%;
+  }
+}
+
+/* Seamless dark extension below the card to prevent any background/blue leak */
+.add-task-docked-container.active::after {
+  content: '';
+  position: absolute;
+  top: 100%;
+  left: 0;
+  right: 0;
+  height: 600px;
+  background: #16161c;
+  pointer-events: none;
+}
+
+.add-task-wrapper {
+  max-width: 680px;
+  width: 100%;
+  pointer-events: auto;
+}
+
+/* User Request: "piche ki list clear dikhai de" - completely transparent scrim */
+.add-task-scrim {
+  position: fixed;
+  inset: 0;
+  z-index: 95;
+  background: transparent !important;
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+  animation: none !important;
+  pointer-events: none;
+}
+
+/* User Request: "add task ke click pe add task wali hi window sild up honi chahiye uske upr keyboard dikhna chahiye. jahan text show hoga vo alg se ni hona chahiye usi add task me dikhna chahiye" */
+.add-task-card {
+  background: #1c1c1e;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 14px;
+  padding: 0.72rem 1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+  box-shadow: 0 4px 18px rgba(0, 0, 0, 0.4);
+  transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+  cursor: pointer;
+}
+
+.add-task-card.active,
+.add-task-card.focused {
+  background: rgba(22, 22, 28, 0.98);
+  backdrop-filter: blur(28px);
+  -webkit-backdrop-filter: blur(28px);
+  border-color: rgba(255, 255, 255, 0.22);
+  box-shadow: 0 -8px 35px rgba(0, 0, 0, 0.65), inset 0 1px 0 rgba(255, 255, 255, 0.12);
+  padding: 0.75rem 1rem;
+  animation: slideUpTaskCard 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@keyframes slideUpTaskCard {
+  from {
+    transform: translateY(24px);
+    opacity: 0.8;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+@media (max-width: 680px) {
+  .add-task-card.active {
+    border-radius: 14px !important;
+    border: 1px solid rgba(255, 255, 255, 0.24) !important;
+    padding: 0.75rem 1rem !important;
+    box-shadow: 0 8px 30px rgba(0, 0, 0, 0.75) !important;
+  }
+}
+
+.add-task-main-row {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  width: 100%;
+}
+
+.add-task-plus-icon {
+  width: auto;
+  height: auto;
+  border-radius: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #ffffff;
+  background: transparent !important;
+  flex-shrink: 0;
+  padding: 0 0.2rem;
+  transition: transform var(--transition-fast), opacity var(--transition-fast);
+  cursor: pointer;
+  border: none;
+}
+
+.add-task-plus-icon:hover {
+  background: transparent !important;
+  opacity: 0.85;
+}
+
+.add-task-back-icon-btn {
+  width: auto;
+  height: auto;
+  border-radius: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #94a3b8;
+  background: transparent !important;
+  flex-shrink: 0;
+  padding: 0 0.2rem;
+  transition: transform var(--transition-fast), color var(--transition-fast);
+  cursor: pointer;
+  border: none;
+}
+
+.add-task-back-icon-btn:hover {
+  color: #38bdf8;
+  transform: translateY(1px);
+}
+
+.add-task-inline-submit-btn {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: #38bdf8;
+  color: #0b1120;
+  border: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  flex-shrink: 0;
+  transition: transform var(--transition-fast), filter var(--transition-fast);
+  box-shadow: 0 2px 10px rgba(56, 189, 248, 0.45);
+}
+
+.add-task-inline-submit-btn:hover {
+  filter: brightness(1.15);
+  transform: scale(1.08);
+}
+
+.add-task-inline-submit-btn:active {
+  transform: scale(0.92);
+}
+
+.add-task-card.active .add-task-plus-icon,
+.add-task-card.focused .add-task-plus-icon {
+  transform: rotate(90deg);
+  background: transparent !important;
+  color: #38bdf8;
+}
+
+.add-task-input {
+  flex: 1;
+  border: none;
+  background: transparent;
+  outline: none;
+  font-size: 1.05rem;
+  font-weight: 500;
+  color: #ffffff;
+  caret-color: #38bdf8;
+  padding: 0.2rem 0;
+  width: 100%;
+  -webkit-appearance: none;
+}
+
+.add-task-input::-webkit-search-decoration,
+.add-task-input::-webkit-search-cancel-button,
+.add-task-input::-webkit-search-results-button,
+.add-task-input::-webkit-search-results-decoration {
+  display: none;
+  -webkit-appearance: none;
+}
+
+.add-task-input::placeholder {
+  color: var(--theme-color, rgba(255, 255, 255, 0.65));
+  opacity: 0.95;
+  font-weight: 500;
+  font-size: 1.05rem;
+}
+
+.add-task-card.active .add-task-input::placeholder {
+  color: rgba(255, 255, 255, 0.4);
+  font-weight: 400;
+}
+
+/* Selected Attribute Chips */
+.add-task-chips-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.45rem;
+  padding-left: 2rem;
+  animation: fadeIn 0.2s ease-out;
+}
+
+.task-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  background: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  color: #f1f5f9;
+  padding: 0.2rem 0.55rem;
+  border-radius: var(--radius-full);
+  font-size: 0.76rem;
+  cursor: pointer;
+  transition: background 0.18s ease;
+  user-select: none;
+}
+
+.task-chip:hover {
+  background: rgba(255, 255, 255, 0.18);
+}
+
+.task-chip.due {
+  background: rgba(56, 189, 248, 0.18);
+  border-color: rgba(56, 189, 248, 0.45);
+  color: #38bdf8;
+}
+
+.task-chip.reminder {
+  background: rgba(251, 191, 36, 0.18);
+  border-color: rgba(251, 191, 36, 0.45);
+  color: #fbbf24;
+}
+
+.task-chip.note {
+  background: rgba(168, 85, 247, 0.18);
+  border-color: rgba(168, 85, 247, 0.45);
+  color: #c084fc;
+}
+
+.chip-remove {
+  cursor: pointer;
+  opacity: 0.7;
+  transition: opacity 0.15s ease;
+}
+
+.chip-remove:hover {
+  opacity: 1;
+}
+
+/* 4 Options Toolbar */
+.add-task-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding-top: 0.45rem;
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+  animation: fadeIn 0.22s ease-out;
+  gap: 0.5rem;
+}
+
+.add-task-actions-group {
+  display: flex;
+  align-items: center;
+  gap: 0.65rem;
+}
+
+.task-toolbar-btn {
+  background: transparent;
+  border: none;
+  color: #94a3b8;
+  width: 34px;
+  height: 34px;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.18s ease;
+}
+
+.task-toolbar-btn:hover {
+  background: rgba(255, 255, 255, 0.12);
+  color: #f8fafc;
+  transform: translateY(-1px);
+}
+
+.task-toolbar-btn.selected {
+  background: rgba(56, 189, 248, 0.22);
+  color: #38bdf8;
+  border: 1.5px solid rgba(56, 189, 248, 0.65);
+}
+
+/* Task Meta Badges in Task List */
+.task-meta-badges {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+  margin-top: 0.25rem;
+}
+
+.task-meta-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  font-size: 0.72rem;
+  color: #94a3b8;
+}
+
+.task-meta-tag.due {
+  color: #38bdf8;
+}
+
+.task-meta-tag.reminder {
+  color: #fbbf24;
+}
+
+.task-meta-tag.note {
+  color: #c084fc;
+}
+
+.task-meta-tag.list-name-badge {
+  color: #8e8e93;
+  font-size: 0.76rem;
+  font-weight: 400;
+}
+
+.task-meta-badges:empty {
+  display: none;
+}
+
+/* User Request: Category item shows "my day" underneath when swiped right */
+.task-meta-tag.myday-badge {
+  color: #38bdf8;
+  background: rgba(56, 189, 248, 0.12);
+  border: 1px solid rgba(56, 189, 248, 0.28);
+  border-radius: 6px;
+  padding: 0.1rem 0.45rem;
+  font-weight: 500;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  letter-spacing: 0.01em;
+}
+
+.task-meta-tag.category-badge {
+  color: #94a3b8;
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  border-radius: 6px;
+  padding: 0.1rem 0.45rem;
+  font-weight: 500;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+}
+
+/* --------------------------------------------------------
+   Swipe to Add to My Day
+   -------------------------------------------------------- */
+.task-swipe-wrapper {
+  position: relative;
+  overflow: hidden;
+  border-radius: var(--radius-md);
+  user-select: none;
+  -webkit-user-select: none;
+  touch-action: pan-y;
+  background: transparent;
+}
+
+.task-swipe-action-bg {
+  position: absolute;
+  top: 0;
+  left: 0;
+  bottom: 0;
+  right: 0;
+  display: flex;
+  align-items: center;
+  border-radius: var(--radius-md);
+  color: #ffffff;
+  pointer-events: none;
+  z-index: 1;
+  transition: opacity 0.12s ease;
+  overflow: hidden;
+}
+
+.task-swipe-action-bg.swipe-right {
+  justify-content: flex-start;
+  padding-left: 1.25rem;
+  background: linear-gradient(90deg, #0284c7 0%, #38bdf8 100%);
+}
+
+.task-swipe-action-bg.swipe-right.in-myday {
+  background: linear-gradient(90deg, #e11d48 0%, #f43f5e 100%);
+}
+
+.swipe-delete-reveal-btn {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+  border: 1.5px solid rgba(255, 255, 255, 0.3);
+  color: #ffffff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 3px 12px rgba(220, 38, 38, 0.5);
+  cursor: pointer;
+  outline: none;
+  transition: transform 0.16s ease, box-shadow 0.16s ease;
+  pointer-events: auto;
+  flex-shrink: 0;
+}
+
+.swipe-delete-reveal-btn:hover {
+  transform: scale(1.08);
+  box-shadow: 0 4px 16px rgba(220, 38, 38, 0.7);
+}
+
+.swipe-delete-reveal-btn:active {
+  transform: scale(0.92);
+}
+
+.task-swipe-action-bg.swipe-right .task-swipe-action-content {
+  transform-origin: left center;
+}
+
+.task-swipe-action-bg.swipe-left .task-swipe-action-content {
+  transform-origin: right center;
+}
+
+.task-swipe-wrapper .task-item-card {
+  position: relative;
+  z-index: 2;
+  width: 100%;
+  margin-bottom: 0;
+  touch-action: pan-y;
+  will-change: transform;
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
+}
+
+/* --------------------------------------------------------
+   Slide-out Drawer for "Lists"
+   -------------------------------------------------------- */
+.drawer-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.55);
+  backdrop-filter: blur(4px);
+  z-index: 100;
+  animation: backdropFadeIn 0.25s ease;
+  touch-action: none !important;
+  overscroll-behavior: none !important;
+}
+
+.drawer-backdrop.closing {
+  animation: backdropFadeOut 0.25s ease forwards;
+}
+
+@keyframes backdropFadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes backdropFadeOut {
+  from { opacity: 1; }
+  to { opacity: 0; }
+}
+
+.lists-drawer {
+  position: fixed !important;
+  inset: 0 !important;
+  top: 0 !important;
+  left: 0 !important;
+  right: 0 !important;
+  bottom: 0 !important;
+  width: 100vw !important;
+  max-width: 100vw !important;
+  height: 100% !important;
+  height: 100dvh !important;
+  background: #000000 !important;
+  z-index: 9999 !important;
+  display: flex !important;
+  flex-direction: column !important;
+  padding: calc(1rem + env(safe-area-inset-top, 0px)) 1rem calc(0.5rem + env(safe-area-inset-bottom, 0px)) !important;
+  animation: drawerSlideIn 0.26s cubic-bezier(0.16, 1, 0.3, 1) forwards !important;
+  will-change: transform, opacity !important;
+  overflow: hidden !important;
+  box-shadow: none !important;
+  border: none !important;
+}
+
+.lists-drawer.closing {
+  animation: drawerSlideOut 0.22s cubic-bezier(0.2, 0.8, 0.2, 1) forwards !important;
+  pointer-events: none !important;
+}
+
+@keyframes drawerSlideIn {
+  0% {
+    transform: translate3d(-100%, 0, 0);
+    opacity: 0.85;
+  }
+  100% {
+    transform: translate3d(0, 0, 0);
+    opacity: 1;
+  }
+}
+
+@keyframes drawerSlideOut {
+  0% {
+    transform: translate3d(0, 0, 0);
+    opacity: 1;
+  }
+  100% {
+    transform: translate3d(-100%, 0, 0);
+    opacity: 0.85;
+  }
+}
+
+/* Header */
+.drawer-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.6rem 0.5rem 0.95rem;
+  width: 100%;
+  max-width: 600px;
+  margin: 0 auto;
+  border-bottom: none !important;
+  flex-shrink: 0;
+}
+
+.drawer-account-box {
+  display: flex;
+  align-items: center;
+  gap: 0.65rem;
+  min-width: 0;
+  flex: 1;
+}
+
+.drawer-account-avatar {
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  background: #00897b; /* Rich teal from screenshot */
+  color: #ffffff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.8rem;
+  font-weight: 600;
+  flex-shrink: 0;
+}
+
+.drawer-account-email-title {
+  font-size: 0.92rem;
+  font-weight: 500;
+  color: #ffffff;
+  letter-spacing: -0.01em;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.drawer-header-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.drawer-icon-btn {
+  background: transparent;
+  border: none;
+  color: #94a3b8;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all var(--transition-fast);
+}
+
+.drawer-icon-btn:hover {
+  background: rgba(255, 255, 255, 0.08);
+  color: #ffffff;
+}
+
+/* Search Bar in Drawer */
+.drawer-search-bar-wrap {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 8px;
+  padding: 0.45rem 0.75rem;
+  margin: 0 auto 0.75rem;
+  width: 100%;
+  max-width: 600px;
+  flex-shrink: 0;
+}
+
+.drawer-search-input {
+  background: transparent;
+  border: none;
+  color: #ffffff;
+  font-size: 16px;
+  outline: none;
+  width: 100%;
+  font-family: inherit;
+  -webkit-appearance: none;
+}
+
+.drawer-search-clear-btn {
+  background: transparent;
+  border: none;
+  color: #94a3b8;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+}
+
+/* Search Bar in My Day */
+.myday-search-bar-wrap {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  background: rgba(22, 23, 29, 0.88);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 12px;
+  padding: 0.5rem 0.85rem;
+  margin: 0.35rem 0 0.85rem;
+  width: 100%;
+  box-shadow: 0 4px 18px rgba(0, 0, 0, 0.35);
+  animation: slideDownFade 0.2s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  z-index: 20;
+}
+
+@keyframes slideDownFade {
+  from {
+    opacity: 0;
+    transform: translateY(-8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.myday-search-input {
+  background: transparent;
+  border: none;
+  color: #ffffff;
+  font-size: 16px;
+  outline: none;
+  width: 100%;
+  font-family: inherit;
+  -webkit-appearance: none;
+}
+
+.myday-search-input::placeholder {
+  color: rgba(255, 255, 255, 0.45);
+}
+
+.search-cancel-btn {
+  background: transparent;
+  border: none;
+  color: #38bdf8;
+  font-size: 0.85rem;
+  font-weight: 600;
+  cursor: pointer;
+  padding: 0.2rem 0.4rem;
+  border-radius: 6px;
+  white-space: nowrap;
+}
+
+.search-cancel-btn:hover {
+  background: rgba(56, 189, 248, 0.1);
+}
+
+.search-empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 3.5rem 1.5rem;
+  text-align: center;
+  animation: fadeIn 0.25s ease;
+}
+
+/* Scroll Content */
+.drawer-scroll-content {
+  flex: 1;
+  overflow-y: auto;
+  overflow-x: hidden;
+  -webkit-overflow-scrolling: touch;
+  width: 100%;
+  max-width: 600px;
+  margin: 0 auto;
+  padding-bottom: 0.5rem;
+}
+
+.drawer-section {
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+}
+
+/* List Item */
+.drawer-list-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.65rem 0.65rem;
+  background: transparent !important;
+  border: none !important;
+  border-bottom: none !important;
+  text-decoration: none !important;
+  border-radius: 8px !important;
+  box-shadow: none !important;
+  color: #ffffff;
+  transition: background var(--transition-fast);
+  cursor: pointer;
+  user-select: none;
+}
+
+.drawer-list-item:hover {
+  background: rgba(255, 255, 255, 0.05) !important;
+}
+
+.drawer-list-item:active {
+  background: rgba(255, 255, 255, 0.09) !important;
+}
+
+.drawer-list-item.active {
+  background: #202228 !important; /* Subtle rounded highlight from screenshot */
+}
+
+.drawer-item-left {
+  display: flex;
+  align-items: center;
+  gap: 0.95rem;
+  min-width: 0;
+}
+
+.drawer-item-title {
+  font-size: 0.92rem;
+  font-weight: 400;
+  color: #ffffff;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.drawer-item-emoji {
+  font-size: 1.15rem;
+  line-height: 1;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 22px;
+}
+
+.drawer-shared-icon {
+  margin-left: 0.45rem;
+  flex-shrink: 0;
+  color: #94a3b8;
+}
+
+/* Clean count matching screenshot */
+.drawer-item-count {
+  font-size: 0.82rem;
+  color: #9ca3af;
+  font-weight: 400;
+  margin-left: auto;
+  padding-left: 0.5rem;
+  font-variant-numeric: tabular-nums;
+}
+
+/* The Horizontal Underline Divider */
+.drawer-divider {
+  height: 1px;
+  background: rgba(255, 255, 255, 0.14);
+  margin: 0.65rem 0.25rem;
+  width: calc(100% - 0.5rem);
+}
+
+/* Bottom Bar */
+.drawer-bottom-bar {
+  flex-shrink: 0;
+  width: 100%;
+  max-width: 600px;
+  margin: 0 auto;
+  padding: 0.85rem 0.4rem 0.25rem;
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.new-list-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.new-list-action-btn {
+  background: transparent;
+  border: none;
+  display: flex;
+  align-items: center;
+  gap: 0.85rem;
+  color: #ffffff;
+  font-size: 1.05rem;
+  font-weight: 400;
+  cursor: pointer;
+  padding: 0.35rem 0.2rem;
+  transition: opacity var(--transition-fast);
+}
+
+.new-list-action-btn:hover {
+  opacity: 0.85;
+}
+
+.new-group-action-btn {
+  background: transparent;
+  border: none;
+  color: #94a3b8;
+  padding: 0.4rem;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 6px;
+  transition: all var(--transition-fast);
+}
+
+.new-group-action-btn:hover {
+  background: rgba(255, 255, 255, 0.08);
+  color: #ffffff;
+}
+
+.new-list-inline-form {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.3rem 0;
+}
+
+.new-list-inline-input {
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid #38bdf8;
+  border-radius: 6px;
+  color: #ffffff;
+  font-size: 1rem;
+  padding: 4px 10px;
+  outline: none;
+  flex: 1;
+  font-family: inherit;
+}
+
+/* Empty State */
+.empty-state {
+  text-align: center;
+  padding: 2rem 1rem;
+  color: var(--text-muted);
+}
+
+.empty-state-icon {
+  width: 48px;
+  height: 48px;
+  margin: 0 auto 0.75rem;
+  opacity: 0.4;
+}
+
+.empty-state-text {
+  font-size: 0.9rem;
+  font-weight: 500;
+}
+
+/* --------------------------------------------------------
+   Title Edit Container
+   -------------------------------------------------------- */
+.title-edit-container {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  margin-bottom: 0.35rem;
+}
+
+.title-edit-input {
+  font-size: 1.8rem;
+  font-weight: 800;
+  color: #0f172a;
+  background: rgba(255, 255, 255, 0.85);
+  border: 2px solid #2563eb;
+  border-radius: var(--radius-md);
+  padding: 0.2rem 0.6rem;
+  outline: none;
+  font-family: inherit;
+  width: 100%;
+  max-width: 340px;
+}
+
+.title-save-btn {
+  background: #2563eb;
+  color: #ffffff;
+  font-weight: 700;
+  font-size: 0.9rem;
+  padding: 0.4rem 0.9rem;
+  border-radius: var(--radius-md);
+  border: none;
+  cursor: pointer;
+}
+
+/* --------------------------------------------------------
+   Bottom Sheet Backdrop
+   -------------------------------------------------------- */
+.bottom-sheet-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.55);
+  backdrop-filter: blur(5px);
+  -webkit-backdrop-filter: blur(5px);
+  z-index: 150;
+  animation: fadeInBackdrop 0.22s ease-out;
+  touch-action: none !important;
+  overscroll-behavior: none !important;
+}
+
+.bottom-sheet-backdrop.closing {
+  animation: fadeOutBackdrop 0.24s ease-in forwards;
+}
+
+@keyframes fadeInBackdrop {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes fadeOutBackdrop {
+  from { opacity: 1; }
+  to { opacity: 0; }
+}
+
+/* --------------------------------------------------------
+   List Option Bottom Sheet
+   User Request:
+   - "jiska background greyish black hoga or uska text creemy white hoga"
+   - "center me 'List Option' hoga or uske right corner pe 'Done' hoga blue color text me"
+   -------------------------------------------------------- */
+.list-options-sheet {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  max-width: 680px;
+  margin: 0 auto;
+  background: rgba(26, 26, 32, 0.88); /* Greyish black, slightly transparent */
+  backdrop-filter: blur(25px);
+  -webkit-backdrop-filter: blur(25px);
+  color: #f7f6f0;      /* Creamy white */
+  border-radius: 22px 22px 0 0;
+  border-top: 1px solid rgba(255, 255, 255, 0.16);
+  box-shadow: 0 -10px 45px rgba(0, 0, 0, 0.7);
+  z-index: 160;
+  animation: sheetSlideUp 0.26s cubic-bezier(0.16, 1, 0.3, 1);
+  padding: 0.5rem 1rem calc(1.75rem + env(safe-area-inset-bottom, 0px));
+}
+
+.list-options-sheet.closing {
+  animation: sheetSlideDown 0.24s cubic-bezier(0.32, 0, 0.67, 0) forwards;
+}
+
+.suggestions-sheet.closing {
+  pointer-events: none;
+}
+
+@keyframes sheetSlideUp {
+  from {
+    transform: translateY(100%);
+  }
+  to {
+    transform: translateY(0);
+  }
+}
+
+@keyframes sheetSlideDown {
+  from {
+    transform: translateY(0);
+    opacity: 1;
+  }
+  to {
+    transform: translateY(100%);
+    opacity: 0.85;
+  }
+}
+
+.sheet-drag-handle {
+  width: 38px;
+  height: 4.5px;
+  background: rgba(255, 255, 255, 0.28);
+  border-radius: 9999px;
+  margin: 8px auto 14px;
+}
+
+.list-options-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.2rem 0.5rem 0.75rem;
+  border-bottom: none !important; /* Underline removed */
+  margin-bottom: 0.35rem;
+}
+
+.header-spacer {
+  width: 50px;
+}
+
+.list-options-title {
+  font-size: 1.05rem;
+  font-weight: 500;
+  color: #f7f6f0; /* Creamy white */
+  text-align: center;
+  flex: 1;
+}
+
+.list-options-done-btn {
+  color: #3b82f6; /* Blue color text */
+  font-weight: 400;
+  font-size: 1rem;
+  padding: 0.25rem 0.5rem;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  transition: opacity 0.15s ease;
+  width: 50px;
+  text-align: right;
+}
+
+.list-options-done-btn:hover {
+  opacity: 0.75;
+}
+
+.list-options-menu {
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+  margin-top: 0.4rem;
+}
+
+.list-option-item {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  width: 100%;
+  padding: 0.85rem 0.85rem;
+  border-radius: 12px;
+  background: transparent;
+  border: none;
+  color: #f7f6f0; /* Creamy white */
+  cursor: pointer;
+  transition: background 0.15s ease, transform 0.1s ease;
+  text-align: left;
+}
+
+.list-option-item:hover {
+  background: rgba(255, 255, 255, 0.08);
+}
+
+.list-option-item:active {
+  background: rgba(255, 255, 255, 0.13);
+  transform: scale(0.99);
+}
+
+.option-icon-wrap {
+  width: 28px;
+  height: 28px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #f7f6f0;
+  flex-shrink: 0;
+}
+
+.option-text {
+  font-size: 1.02rem;
+  font-weight: 400;
+  color: #f7f6f0; /* Creamy white */
+  flex: 1;
+}
+
+.option-badge {
+  font-size: 0.78rem;
+  font-weight: 600;
+  padding: 0.2rem 0.55rem;
+  border-radius: 9999px;
+  background: rgba(255, 255, 255, 0.12);
+  color: #cbd5e1;
+}
+
+.option-right-arrow {
+  color: rgba(255, 255, 255, 0.45);
+  margin-left: auto;
+  transition: transform var(--transition-fast), color var(--transition-fast);
+}
+
+.list-option-item:hover .option-right-arrow {
+  color: #f7f6f0;
+  transform: translateX(2px);
+}
+
+.list-option-item.delete-list-btn:hover {
+  background: rgba(239, 68, 68, 0.12) !important;
+}
+
+.list-option-item.delete-list-btn:active {
+  background: rgba(239, 68, 68, 0.22) !important;
+}
+
+/* --------------------------------------------------------
+   Suggestions Bottom Sheet (Regular Purchases)
+   -------------------------------------------------------- */
+.suggestions-sheet {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  max-width: 680px;
+  margin: 0 auto;
+  max-height: 82vh;
+  display: flex;
+  flex-direction: column;
+  background: #1c1c21;
+  color: #f7f6f0;
+  border-radius: 22px 22px 0 0;
+  border-top: 1px solid rgba(255, 255, 255, 0.12);
+  box-shadow: 0 -10px 45px rgba(0, 0, 0, 0.7);
+  z-index: 160;
+  animation: sheetSlideUp 0.26s cubic-bezier(0.16, 1, 0.3, 1);
+  padding: 0.5rem 1.25rem calc(1.75rem + env(safe-area-inset-bottom, 0px));
+}
+
+.suggestions-notch-zone {
+  width: 100%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 0.4rem 0 0.65rem;
+  cursor: grab;
+  touch-action: none !important;
+  overscroll-behavior: none !important;
+  -webkit-tap-highlight-color: transparent;
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+.suggestions-notch-zone:active {
+  cursor: grabbing;
+}
+
+.suggestions-notch-zone .sheet-drag-handle {
+  margin: 0;
+  transition: background 0.15s ease, transform 0.15s ease;
+  pointer-events: none;
+}
+
+.suggestions-notch-zone:hover .sheet-drag-handle,
+.suggestions-notch-zone:active .sheet-drag-handle {
+  background: rgba(255, 255, 255, 0.55);
+  transform: scaleY(1.2);
+}
+
+.suggestions-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.25rem 0 0.85rem;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  touch-action: none !important;
+  overscroll-behavior: none !important;
+  user-select: none;
+  -webkit-user-select: none;
+  cursor: grab;
+}
+
+.suggestions-header:active {
+  cursor: grabbing;
+}
+
+.suggestions-title-group {
+  display: flex;
+  align-items: center;
+  gap: 0.65rem;
+}
+
+.suggestions-title {
+  font-size: 1.05rem;
+  font-weight: 700;
+  color: #f7f6f0;
+}
+
+.suggestions-subtitle {
+  font-size: 0.8rem;
+  color: #94a3b8;
+  margin-top: 0.1rem;
+}
+
+.suggestions-done-btn {
+  color: #3b82f6;
+  font-weight: 600;
+  font-size: 1rem;
+  padding: 0.25rem 0.5rem;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  transition: opacity 0.15s ease;
+}
+
+.suggestions-done-btn:hover {
+  opacity: 0.75;
+}
+
+.suggestions-list {
+  overflow-y: auto;
+  padding: 0.85rem 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.55rem;
+  max-height: 60vh;
+}
+
+.suggestion-card {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.75rem 0.95rem;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 12px;
+  transition: background 0.15s ease;
+}
+
+.suggestion-card:hover {
+  background: rgba(255, 255, 255, 0.09);
+}
+
+.suggestion-info {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.suggestion-emoji {
+  font-size: 1.45rem;
+}
+
+.suggestion-name {
+  font-size: 0.96rem;
+  font-weight: 500;
+  color: #f7f6f0;
+}
+
+.suggestion-category {
+  font-size: 0.72rem;
+  color: #94a3b8;
+}
+
+.suggestion-add-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  min-width: 36px;
+  padding: 0;
+  background: transparent !important;
+  background-color: transparent !important;
+  border: none !important;
+  border-radius: 0 !important;
+  box-shadow: none !important;
+  outline: none !important;
+  color: #f1f5f9;
+  cursor: pointer;
+  transition: transform 0.16s cubic-bezier(0.16, 1, 0.3, 1), color 0.16s ease;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.suggestion-add-btn:hover,
+.suggestion-add-btn:focus,
+.suggestion-add-btn:focus-visible {
+  color: #38bdf8;
+  transform: scale(1.18);
+  background: transparent !important;
+  background-color: transparent !important;
+  box-shadow: none !important;
+  outline: none !important;
+}
+
+.suggestion-add-btn:active {
+  transform: scale(0.9);
+  color: #0284c7;
+  background: transparent !important;
+  background-color: transparent !important;
+  box-shadow: none !important;
+  outline: none !important;
+}
+
+.suggestion-added-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  padding: 0.32rem 0.65rem;
+  border-radius: 9999px;
+  background: rgba(16, 185, 129, 0.18);
+  color: #34d399;
+  font-size: 0.8rem;
+  font-weight: 600;
+}
+
+.suggestion-added-group {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+
+.suggestion-undo-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.28rem;
+  padding: 0.32rem 0.65rem;
+  border-radius: 9999px;
+  background: rgba(255, 255, 255, 0.08);
+  color: #cbd5e1;
+  font-size: 0.78rem;
+  font-weight: 600;
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.suggestion-undo-btn:hover {
+  background: rgba(239, 68, 68, 0.18);
+  color: #f87171;
+  border-color: rgba(239, 68, 68, 0.35);
+  transform: scale(1.04);
+}
+
+.suggestion-undo-btn:active {
+  transform: scale(0.96);
+}
+
+/* --------------------------------------------------------
+   Toast Notification Floating Pill
+   -------------------------------------------------------- */
+.toast-notification {
+  position: fixed;
+  top: 1.5rem;
+  left: 50%;
+  transform: translateX(-50%);
+  background: rgba(15, 23, 42, 0.92);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+  color: #ffffff;
+  padding: 0.65rem 1.4rem;
+  border-radius: 9999px;
+  font-size: 0.9rem;
+  font-weight: 600;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.35);
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  z-index: 250;
+  animation: toastPop 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+  pointer-events: none;
+}
+
+@keyframes toastPop {
+  from {
+    opacity: 0;
+    transform: translate(-50%, -12px);
+  }
+  to {
+    opacity: 1;
+    transform: translate(-50%, 0);
+  }
+}
+
+/* --------------------------------------------------------
+   Task Extended Bottom Sheets (Select a List, Reminder, Due, Note)
+   -------------------------------------------------------- */
+.task-bottom-sheet {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  max-width: 680px;
+  margin: 0 auto;
+  background: rgba(24, 24, 30, 0.95);
+  backdrop-filter: blur(25px);
+  -webkit-backdrop-filter: blur(25px);
+  color: #f7f6f0;
+  border-radius: 22px 22px 0 0;
+  border-top: 1px solid rgba(255, 255, 255, 0.16);
+  box-shadow: 0 -12px 50px rgba(0, 0, 0, 0.75);
+  z-index: 180;
+  animation: sheetSlideUp 0.32s cubic-bezier(0.16, 1, 0.3, 1);
+  padding: 0.6rem 1.25rem calc(1.75rem + env(safe-area-inset-bottom, 0px));
+  max-height: 85vh;
+  display: flex;
+  flex-direction: column;
+  will-change: transform;
+}
+
+.task-bottom-sheet.closing {
+  animation: sheetSlideDown 0.25s cubic-bezier(0.32, 0, 0.67, 0) forwards;
+}
+
+.sheet-top-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 0.85rem;
+  min-height: 38px;
+}
+
+.sheet-center-title {
+  font-size: 1.05rem;
+  font-weight: 600;
+  color: #f8fafc;
+  margin: 0;
+  text-align: center;
+}
+
+.sheet-text-btn {
+  background: transparent;
+  border: none;
+  font-size: 0.95rem;
+  cursor: pointer;
+  padding: 0.35rem 0.6rem;
+  border-radius: 6px;
+  transition: background 0.15s ease, opacity 0.15s ease;
+}
+
+.sheet-text-btn.cancel {
+  color: #94a3b8;
+}
+
+.sheet-text-btn.cancel:hover {
+  color: #f8fafc;
+}
+
+.sheet-text-btn.done,
+.sheet-text-btn.set {
+  color: #38bdf8;
+  font-weight: 600;
+}
+
+.sheet-text-btn.done:hover,
+.sheet-text-btn.set:hover {
+  opacity: 0.85;
+}
+
+.sheet-back-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  background: transparent;
+  border: none;
+  color: #38bdf8;
+  font-size: 0.92rem;
+  cursor: pointer;
+  padding: 0.35rem 0.5rem;
+  border-radius: 6px;
+}
+
+.sheet-back-btn:hover {
+  opacity: 0.85;
+}
+
+.sheet-view-content {
+  display: flex;
+  flex-direction: column;
+}
+
+.sheet-options-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  max-height: 58vh;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  padding-right: 2px;
+}
+
+.sheet-list-divider {
+  height: 1px;
+  background: rgba(255, 255, 255, 0.12);
+  margin: 0.45rem 0.25rem;
+}
+
+.sheet-option-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: transparent;
+  border: none;
+  padding: 0.75rem 0.85rem;
+  border-radius: 12px;
+  color: #f8fafc;
+  cursor: pointer;
+  transition: background 0.18s ease;
+  width: 100%;
+  text-align: left;
+}
+
+.sheet-option-row:hover {
+  background: rgba(255, 255, 255, 0.08);
+}
+
+.sheet-option-row.selected {
+  background: rgba(56, 189, 248, 0.12);
+}
+
+.sheet-option-left {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.sheet-option-icon-wrap {
+  width: 34px;
+  height: 34px;
+  border-radius: 9px;
+  background: rgba(255, 255, 255, 0.07);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #f8fafc;
+}
+
+.sheet-option-label {
+  font-size: 0.95rem;
+  font-weight: 500;
+  color: #f8fafc;
+}
+
+.sheet-option-right {
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+  font-size: 0.88rem;
+  color: #94a3b8;
+}
+
+.sheet-view-slide {
+  animation: slideInRight 0.22s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@keyframes slideInRight {
+  from {
+    opacity: 0;
+    transform: translateX(30px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+/* Choose Time Row Card under Calendar */
+.choose-time-card {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-top: 0.85rem;
+  padding: 0.85rem 1rem;
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 14px;
+  cursor: pointer;
+  transition: all 0.18s ease;
+}
+
+.choose-time-card:hover {
+  background: rgba(255, 255, 255, 0.1);
+  border-color: rgba(255, 255, 255, 0.2);
+}
+
+.choose-time-card-left {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  font-size: 0.95rem;
+  font-weight: 500;
+  color: #f8fafc;
+}
+
+.choose-time-card-right {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  color: #94a3b8;
+}
+
+.time-display-pill {
+  background: rgba(56, 189, 248, 0.18);
+  color: #38bdf8;
+  padding: 0.2rem 0.6rem;
+  border-radius: var(--radius-full);
+  font-size: 0.82rem;
+  font-weight: 600;
+}
+
+/* Interactive Calendar */
+.interactive-calendar {
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+}
+
+.calendar-header-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 0.5rem;
+}
+
+.calendar-month-title {
+  font-size: 1rem;
+  font-weight: 600;
+  color: #f8fafc;
+}
+
+.calendar-nav-buttons {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+}
+
+.cal-nav-btn {
+  background: rgba(255, 255, 255, 0.08);
+  border: none;
+  color: #f8fafc;
+  width: 30px;
+  height: 30px;
+  border-radius: 7px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: background 0.15s ease;
+}
+
+.cal-nav-btn:hover {
+  background: rgba(255, 255, 255, 0.16);
+}
+
+.calendar-weekdays-row {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  text-align: center;
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: #94a3b8;
+  padding: 0.25rem 0;
+}
+
+.calendar-grid {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 4px;
+}
+
+.cal-day-cell {
+  aspect-ratio: 1;
+  background: transparent;
+  border: none;
+  color: #f8fafc;
+  font-size: 0.88rem;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.cal-day-cell:hover {
+  background: rgba(255, 255, 255, 0.12);
+}
+
+.cal-day-cell.today {
+  border: 1px solid rgba(56, 189, 248, 0.6);
+  font-weight: 700;
+}
+
+.cal-day-cell.selected {
+  background: #2563eb !important;
+  color: #ffffff;
+  font-weight: 700;
+  box-shadow: 0 0 14px rgba(37, 99, 235, 0.6);
+}
+
+.cal-day-cell.empty {
+  cursor: default;
+  background: transparent !important;
+}
+
+/* Time Picker Component */
+.interactive-time-picker {
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+  padding: 0.5rem 0;
+}
+
+.time-presets-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 0.6rem;
+}
+
+.time-preset-chip {
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 12px;
+  padding: 0.6rem 0.8rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+  cursor: pointer;
+  transition: all 0.18s ease;
+  color: #f8fafc;
+  text-align: left;
+}
+
+.time-preset-chip:hover {
+  background: rgba(255, 255, 255, 0.1);
+  border-color: rgba(255, 255, 255, 0.22);
+}
+
+.time-preset-chip.active {
+  background: rgba(56, 189, 248, 0.18);
+  border-color: rgba(56, 189, 248, 0.5);
+  color: #38bdf8;
+}
+
+.preset-label {
+  font-size: 0.82rem;
+  color: #94a3b8;
+}
+
+.preset-time {
+  font-size: 0.95rem;
+  font-weight: 600;
+}
+
+.time-wheels-container {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.75rem;
+  padding: 1rem;
+  background: rgba(255, 255, 255, 0.04);
+  border-radius: 14px;
+}
+
+.time-wheel-col {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.35rem;
+}
+
+.time-wheel-col label {
+  font-size: 0.72rem;
+  color: #94a3b8;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.time-select-wheel {
+  background: rgba(18, 18, 22, 0.85);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  color: #f8fafc;
+  padding: 0.5rem 0.75rem;
+  border-radius: 10px;
+  font-size: 1.25rem;
+  font-weight: 600;
+  outline: none;
+  cursor: pointer;
+}
+
+.time-colon-separator {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: #f8fafc;
+  margin-top: 1rem;
+}
+
+.time-period-toggle {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  margin-top: 1rem;
+}
+
+.period-btn {
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  color: #94a3b8;
+  padding: 0.35rem 0.65rem;
+  border-radius: 8px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.period-btn.active {
+  background: #2563eb;
+  border-color: #2563eb;
+  color: #ffffff;
+}
+
+/* Add Note Textarea */
+.sheet-note-textarea {
+  width: 100%;
+  box-sizing: border-box;
+  background: rgba(0, 0, 0, 0.3);
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  border-radius: 14px;
+  padding: 0.95rem;
+  color: #f8fafc;
+  font-size: 0.95rem;
+  line-height: 1.5;
+  outline: none;
+  resize: vertical;
+  min-height: 140px;
+  font-family: inherit;
+  transition: border-color 0.18s ease;
+}
+
+.sheet-note-textarea:focus {
+  border-color: rgba(56, 189, 248, 0.6);
+  box-shadow: 0 0 0 2px rgba(56, 189, 248, 0.2);
+}
+
+.sheet-note-textarea::placeholder {
+  color: rgba(255, 255, 255, 0.4);
+}
+
+.new-list-creator-row {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-top: 0.6rem;
+  padding: 0.4rem 0.5rem;
+}
+
+.new-list-input {
+  flex: 1;
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  color: #f8fafc;
+  padding: 0.55rem 0.85rem;
+  border-radius: 9px;
+  font-size: 0.9rem;
+  outline: none;
+}
+
+.new-list-input:focus {
+  border-color: rgba(56, 189, 248, 0.5);
+}
+
+.new-list-add-btn {
+  background: #2563eb;
+  border: none;
+  color: #ffffff;
+  padding: 0.55rem 0.9rem;
+  border-radius: 9px;
+  font-size: 0.85rem;
+  font-weight: 500;
+  cursor: pointer;
+}
+
+/* --------------------------------------------------------
+   Delete Task Confirmation Modal (Apple / VisionOS Glass Style)
+   -------------------------------------------------------- */
+.delete-confirm-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.28);
+  backdrop-filter: blur(3px);
+  -webkit-backdrop-filter: blur(3px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1.5rem;
+  z-index: 2000;
+  animation: fadeInBackdrop 0.18s ease-out;
+  touch-action: none !important;
+}
+
+.delete-confirm-dialog {
+  background: rgba(22, 26, 36, 0.52);
+  backdrop-filter: blur(16px) saturate(160%);
+  -webkit-backdrop-filter: blur(16px) saturate(160%);
+  border: none !important;
+  outline: none !important;
+  border-radius: 22px;
+  width: 100%;
+  max-width: 310px;
+  padding: 1.45rem 1.35rem 1.25rem;
+  box-shadow: 
+    0 24px 50px -10px rgba(0, 0, 0, 0.55),
+    0 8px 24px -4px rgba(0, 0, 0, 0.35),
+    inset 0 1px 1px 0 rgba(255, 255, 255, 0.16);
+  animation: dialogScaleIn 0.22s cubic-bezier(0.16, 1, 0.3, 1);
+  text-align: center;
+}
+
+[data-theme='light'] .delete-confirm-dialog {
+  background: rgba(255, 255, 255, 0.65);
+  backdrop-filter: blur(16px) saturate(160%);
+  -webkit-backdrop-filter: blur(16px) saturate(160%);
+  border: none !important;
+  box-shadow: 
+    0 20px 48px -10px rgba(0, 0, 0, 0.18),
+    inset 0 1px 1px 0 rgba(255, 255, 255, 0.95);
+}
+
+.delete-confirm-message {
+  font-size: 0.98rem;
+  line-height: 1.5;
+  color: #f1f5f9 !important; /* Crisp readable off-white */
+  margin: 0.25rem 0 1.45rem 0;
+  word-break: break-word;
+  font-weight: 500;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.4);
+}
+
+[data-theme='light'] .delete-confirm-message {
+  color: #334155 !important;
+  text-shadow: none;
+}
+
+.delete-confirm-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  width: 100%;
+}
+
+.delete-cancel-btn {
+  flex: 1;
+  background: rgba(255, 255, 255, 0.08);
+  border: none !important;
+  outline: none !important;
+  color: #f1f5f9 !important;
+  font-size: 0.92rem;
+  font-weight: 600;
+  padding: 0.72rem 1rem;
+  border-radius: 14px;
+  cursor: pointer;
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.1);
+  transition: all 0.18s ease;
+  text-align: center;
+}
+
+.delete-cancel-btn:hover {
+  background: rgba(255, 255, 255, 0.14);
+  color: #ffffff !important;
+  transform: translateY(-1px);
+}
+
+.delete-cancel-btn:active {
+  transform: translateY(0);
+}
+
+[data-theme='light'] .delete-cancel-btn {
+  background: rgba(0, 0, 0, 0.06);
+  color: #334155 !important;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.5);
+}
+
+[data-theme='light'] .delete-cancel-btn:hover {
+  background: rgba(0, 0, 0, 0.1);
+}
+
+.delete-action-btn {
+  flex: 1;
+  background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+  border: none !important;
+  outline: none !important;
+  color: #ffffff;
+  font-size: 0.92rem;
+  font-weight: 600;
+  padding: 0.72rem 1.15rem;
+  border-radius: 14px;
+  cursor: pointer;
+  box-shadow: 0 4px 16px rgba(220, 38, 38, 0.38), inset 0 1px 0 rgba(255, 255, 255, 0.2);
+  transition: all 0.18s ease;
+  text-align: center;
+}
+
+.delete-action-btn:hover {
+  background: linear-gradient(135deg, #f87171 0%, #ef4444 100%);
+  box-shadow: 0 6px 22px rgba(220, 38, 38, 0.55), inset 0 1px 0 rgba(255, 255, 255, 0.3);
+  transform: translateY(-1px);
+}
+
+.delete-action-btn:active {
+  transform: translateY(0);
+}
+
+@keyframes dialogScaleIn {
+  from {
+    opacity: 0;
+    transform: scale(0.92);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+/* --------------------------------------------------------
+/* --------------------------------------------------------
+   Share List Collaboration & Bottom Sheet (Matching Screenshot)
+   User Request: "share list ka outer cercle do dusre icons ki trah"
+   -------------------------------------------------------- */
+.share-list-header-btn {
+  height: 38px;
+  min-width: 38px;
+  padding: 0 9px;
+  border-radius: var(--radius-full);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+  color: #f8fafc;
+  background: rgba(18, 18, 22, 0.55);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.15);
+  transition: all var(--transition-fast);
+  cursor: pointer;
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+  user-select: none;
+}
+
+.share-list-header-btn:hover {
+  background: rgba(18, 18, 22, 0.75);
+  color: #ffffff;
+  transform: scale(1.08);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.25);
+}
+
+.share-list-header-btn:active {
+  transform: scale(0.96);
+}
+
+.share-header-count {
+  font-size: 0.88rem;
+  font-weight: 600;
+  line-height: 1;
+  color: #38bdf8;
+}
+
+.share-list-sheet {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  max-width: 680px;
+  margin: 0 auto;
+  background: #18181b;
+  backdrop-filter: blur(28px);
+  -webkit-backdrop-filter: blur(28px);
+  border-radius: 24px 24px 0 0;
+  border-top: 1px solid rgba(255, 255, 255, 0.12);
+  box-shadow: 0 -12px 50px rgba(0, 0, 0, 0.75);
+  z-index: 170;
+  animation: sheetSlideUp 0.26s cubic-bezier(0.16, 1, 0.3, 1);
+  padding: 0.5rem 1.25rem calc(1.75rem + env(safe-area-inset-bottom, 0px));
+  color: #ffffff;
+}
+
+.share-list-sheet.closing {
+  animation: sheetSlideDown 0.22s cubic-bezier(0.32, 0, 0.67, 0) forwards;
+}
+
+.share-list-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.25rem 0 0.85rem;
+  margin-bottom: 0.2rem;
+}
+
+.share-list-title {
+  font-size: 1.15rem;
+  font-weight: 600;
+  color: #ffffff;
+  text-align: center;
+  flex: 1;
+  margin: 0;
+  letter-spacing: -0.2px;
+}
+
+.share-list-done-btn {
+  color: #38bdf8;
+  font-weight: 500;
+  font-size: 1.05rem;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  padding: 0.25rem 0.5rem;
+  text-align: right;
+  width: 60px;
+  transition: opacity 0.15s ease;
+}
+
+.share-list-done-btn:hover {
+  opacity: 0.75;
+}
+
+.share-list-content {
+  padding: 0.25rem 0.25rem 0.5rem;
+}
+
+.share-section-label {
+  color: #a1a1aa;
+  font-size: 0.9rem;
+  font-weight: 400;
+  margin-bottom: 0.75rem;
+  text-align: left;
+  padding-left: 2px;
+}
+
+.share-members-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-bottom: 1.75rem;
+}
+
+.share-member-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 0.7rem 0.9rem;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  border-radius: 12px;
+  transition: background 0.15s ease;
+}
+
+.share-member-item:hover {
+  background: rgba(255, 255, 255, 0.08);
+}
+
+.share-member-avatar {
+  width: 38px;
+  height: 38px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 700;
+  font-size: 0.95rem;
+  color: #ffffff;
+  flex-shrink: 0;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.share-member-info {
+  flex: 1;
+  min-width: 0;
+}
+
+.share-member-name {
+  display: block;
+  font-size: 0.96rem;
+  font-weight: 500;
+  color: #ffffff;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.share-member-role {
+  color: #a1a1aa;
+  font-size: 0.9rem;
+  font-weight: 400;
+  flex-shrink: 0;
+  margin-left: 8px;
+}
+
+.share-action-buttons-row {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 1.15rem;
+}
+
+.share-invite-btn {
+  flex: 1;
+  height: 48px;
+  background: #ffffff;
+  color: #000000;
+  font-size: 1rem;
+  font-weight: 600;
+  border-radius: 12px;
+  border: none;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 0.15s ease, transform 0.1s ease;
+  user-select: none;
+}
+
+.share-invite-btn:active {
+  transform: scale(0.98);
+  background: #f1f5f9;
+}
+
+.share-native-btn {
+  width: 48px;
+  height: 48px;
+  background: #ffffff;
+  color: #000000;
+  border-radius: 12px;
+  border: none;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  transition: background 0.15s ease, transform 0.1s ease;
+  user-select: none;
+}
+
+.share-native-btn:active {
+  transform: scale(0.98);
+  background: #f1f5f9;
+}
+
+.share-email-invite-form {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 1.25rem;
+  background: rgba(255, 255, 255, 0.08);
+  padding: 6px;
+  border-radius: 12px;
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  animation: fadeIn 0.2s ease-out;
+}
+
+.share-email-input {
+  flex: 1;
+  background: transparent;
+  border: none;
+  outline: none;
+  color: #ffffff;
+  font-size: 0.92rem;
+  padding: 0.4rem 0.75rem;
+}
+
+.share-email-input::placeholder {
+  color: #94a3b8;
+}
+
+.share-email-send-btn {
+  background: #38bdf8;
+  color: #000000;
+  border: none;
+  font-weight: 600;
+  font-size: 0.88rem;
+  padding: 0.45rem 1rem;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: opacity 0.15s ease;
+}
+
+.share-email-send-btn:hover {
+  opacity: 0.9;
+}
+
+.share-list-disclaimer {
+  color: #a1a1aa;
+  font-size: 0.86rem;
+  line-height: 1.4;
+  text-align: center;
+  margin: 0 auto 1.75rem;
+  max-width: 310px;
+}
+
+.share-leave-list-btn {
+  display: block;
+  width: 100%;
+  background: transparent;
+  border: none;
+  color: #ef4444;
+  font-size: 1.02rem;
+  font-weight: 500;
+  cursor: pointer;
+  text-align: center;
+  padding: 0.5rem;
+  transition: opacity 0.15s ease;
+}
+
+.share-leave-list-btn:hover {
+  opacity: 0.85;
+}
+
+/* --------------------------------------------------------
+   Share via Apps Sheet (WhatsApp, Instagram, Messages, Email)
+   User Request: "iske click pe options me ana chahiye whatsapp instagram msg etc."
+   -------------------------------------------------------- */
+.share-apps-sheet {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  max-width: 580px;
+  margin: 0 auto;
+  background: #18181b;
+  border-radius: 26px 26px 0 0;
+  border-top: 1px solid rgba(255, 255, 255, 0.14);
+  box-shadow: 0 -16px 60px rgba(0, 0, 0, 0.85);
+  z-index: 195;
+  animation: sheetSlideUp 0.26s cubic-bezier(0.16, 1, 0.3, 1);
+  padding: 0.65rem 1.25rem calc(1.5rem + env(safe-area-inset-bottom, 0px));
+  color: #ffffff;
+}
+
+.share-apps-sheet.closing {
+  animation: sheetSlideDown 0.22s cubic-bezier(0.32, 0, 0.67, 0) forwards;
+}
+
+.share-apps-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  margin-top: 0.35rem;
+  margin-bottom: 1.15rem;
+  padding: 0 0.2rem;
+}
+
+.share-apps-title-wrap {
+  flex: 1;
+}
+
+.share-apps-title {
+  font-size: 1.18rem;
+  font-weight: 700;
+  color: #ffffff;
+  margin: 0 0 0.2rem;
+  letter-spacing: -0.3px;
+}
+
+.share-apps-subtitle {
+  font-size: 0.85rem;
+  color: #94a3b8;
+  margin: 0;
+}
+
+.share-apps-close-btn {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.1);
+  border: none;
+  color: #94a3b8;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.share-apps-close-btn:hover {
+  background: rgba(255, 255, 255, 0.18);
+  color: #ffffff;
+}
+
+.share-apps-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 0.85rem;
+  margin-bottom: 1.25rem;
+}
+
+.share-app-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.55rem;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  padding: 0.4rem 0.2rem;
+  border-radius: 14px;
+  transition: transform 0.15s ease, opacity 0.15s ease;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.share-app-item:active {
+  transform: scale(0.92);
+  opacity: 0.85;
+}
+
+.share-app-icon-wrap {
+  width: 58px;
+  height: 58px;
+  border-radius: 18px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #ffffff;
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.35);
+  transition: transform 0.15s ease;
+}
+
+.share-app-icon-wrap.whatsapp {
+  background: #25D366;
+}
+
+.share-app-icon-wrap.instagram {
+  background: radial-gradient(circle at 30% 107%, #fdf497 0%, #fdf497 5%, #fd5949 45%, #d6249f 60%, #285AEB 90%);
+}
+
+.share-app-icon-wrap.messages {
+  background: #10b981;
+}
+
+.share-app-icon-wrap.email {
+  background: #3b82f6;
+}
+
+.share-app-label {
+  font-size: 0.82rem;
+  font-weight: 500;
+  color: #f1f5f9;
+  text-align: center;
+  letter-spacing: -0.1px;
+}
+
+.share-link-preview-box {
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 14px;
+  padding: 0.6rem 0.85rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  margin-bottom: 0.85rem;
+}
+
+.share-link-info {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+}
+
+.share-link-url-text {
+  font-size: 0.82rem;
+  color: #94a3b8;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  display: block;
+}
+
+.share-link-copy-btn {
+  background: #38bdf8;
+  color: #0b1120;
+  border: none;
+  border-radius: 8px;
+  font-size: 0.82rem;
+  font-weight: 600;
+  padding: 0.42rem 0.8rem;
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  cursor: pointer;
+  flex-shrink: 0;
+  transition: opacity 0.15s ease, transform 0.15s ease;
+}
+
+.share-link-copy-btn:active {
+  transform: scale(0.95);
+}
+
+.share-system-more-btn {
+  width: 100%;
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  color: #38bdf8;
+  font-size: 0.95rem;
+  font-weight: 600;
+  border-radius: 12px;
+  padding: 0.72rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  cursor: pointer;
+  margin-bottom: 0.75rem;
+  transition: background 0.15s ease;
+}
+
+.share-system-more-btn:active {
+  background: rgba(255, 255, 255, 0.14);
+}
+
+.share-apps-cancel-btn {
+  width: 100%;
+  background: #27272a;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  color: #ffffff;
+  font-size: 0.98rem;
+  font-weight: 600;
+  border-radius: 14px;
+  padding: 0.82rem;
+  cursor: pointer;
+  transition: background 0.15s ease;
+}
+
+.share-apps-cancel-btn:active {
+  background: #3f3f46;
+}
+
+.share-leave-list-btn:active {
+  opacity: 0.6;
+}
+
+/* --------------------------------------------------------
+   Mobile Download / Install App Header Button
+   User Request: "mobile me download ka option do or jb download ho jaye to application ki tarah icon bnke dikhe screen pe."
+   -------------------------------------------------------- */
+.mobile-download-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.42rem 0.78rem;
+  border-radius: var(--radius-full);
+  background: linear-gradient(135deg, #0284c7 0%, #2563eb 100%);
+  color: #ffffff !important;
+  font-size: 0.82rem;
+  font-weight: 600;
+  border: 1px solid rgba(255, 255, 255, 0.28);
+  box-shadow: 0 2px 10px rgba(2, 132, 199, 0.45);
+  cursor: pointer;
+  transition: all var(--transition-fast);
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+  letter-spacing: 0.01em;
+  white-space: nowrap;
+}
+
+.mobile-download-btn:hover {
+  transform: translateY(-1px) scale(1.03);
+  background: linear-gradient(135deg, #0369a1 0%, #1d4ed8 100%);
+  box-shadow: 0 4px 16px rgba(2, 132, 199, 0.6);
+}
+
+.mobile-download-btn:active {
+  transform: scale(0.96);
+}
+
+/* --------------------------------------------------------
+   Install App Sheet / Modal (PWA Installation Guide)
+   -------------------------------------------------------- */
+.install-app-sheet {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  max-width: 680px;
+  margin: 0 auto;
+  max-height: 86vh;
+  display: flex;
+  flex-direction: column;
+  background: #161822;
+  color: #f8fafc;
+  border-radius: 24px 24px 0 0;
+  border-top: 1px solid rgba(255, 255, 255, 0.16);
+  box-shadow: 0 -12px 50px rgba(0, 0, 0, 0.8);
+  z-index: 180;
+  animation: sheetSlideUp 0.28s cubic-bezier(0.16, 1, 0.3, 1);
+  padding: 0.65rem 1.25rem calc(1.5rem + env(safe-area-inset-bottom, 0px));
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+.install-app-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.4rem 0 0.85rem;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.install-app-brand {
+  display: flex;
+  align-items: center;
+  gap: 0.85rem;
+}
+
+.install-app-icon-preview {
+  width: 44px;
+  height: 44px;
+  border-radius: 12px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.35);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  flex-shrink: 0;
+}
+
+.install-app-title {
+  font-size: 1.15rem;
+  font-weight: 700;
+  color: #ffffff;
+  margin: 0;
+  line-height: 1.2;
+}
+
+.install-app-badge {
+  font-size: 0.72rem;
+  font-weight: 600;
+  color: #38bdf8;
+  background: rgba(56, 189, 248, 0.12);
+  padding: 0.15rem 0.5rem;
+  border-radius: var(--radius-full);
+  display: inline-block;
+  margin-top: 0.2rem;
+  border: 1px solid rgba(56, 189, 248, 0.2);
+}
+
+.install-modal-close-btn {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(255, 255, 255, 0.08);
+  color: #94a3b8;
+  border: none;
+  cursor: pointer;
+  transition: all var(--transition-fast);
+}
+
+.install-modal-close-btn:hover {
+  background: rgba(255, 255, 255, 0.16);
+  color: #ffffff;
+}
+
+.install-app-body {
+  padding: 1rem 0;
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.install-icon-showcase {
+  display: flex;
+  justify-content: center;
+  margin-bottom: 0.25rem;
+}
+
+.home-screen-preview-card {
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 16px;
+  padding: 1rem 1.25rem;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  width: 100%;
+}
+
+.phone-mockup-icon-wrapper {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.4rem;
+  margin-bottom: 0.65rem;
+}
+
+.home-screen-app-icon {
+  width: 68px;
+  height: 68px;
+  border-radius: 18px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.5), 0 2px 6px rgba(0, 0, 0, 0.3);
+  border: 1.5px solid rgba(255, 255, 255, 0.22);
+  transition: transform 0.2s ease;
+}
+
+.home-screen-app-icon:hover {
+  transform: scale(1.06);
+}
+
+.home-screen-app-label {
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: #f1f5f9;
+  letter-spacing: 0.01em;
+}
+
+.home-screen-preview-note {
+  font-size: 0.85rem;
+  color: #94a3b8;
+  margin: 0;
+  line-height: 1.4;
+}
+
+.install-direct-action {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.install-primary-submit-btn {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.55rem;
+  padding: 0.85rem 1.25rem;
+  border-radius: 14px;
+  background: linear-gradient(135deg, #0284c7 0%, #2563eb 100%);
+  color: #ffffff;
+  font-size: 1rem;
+  font-weight: 700;
+  border: 1px solid rgba(255, 255, 255, 0.25);
+  box-shadow: 0 4px 18px rgba(37, 99, 235, 0.45);
+  cursor: pointer;
+  transition: all var(--transition-fast);
+}
+
+.install-primary-submit-btn:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 6px 24px rgba(37, 99, 235, 0.6);
+}
+
+.install-primary-submit-btn:active {
+  transform: scale(0.98);
+}
+
+.install-subtitle-hint {
+  font-size: 0.78rem;
+  color: #64748b;
+  margin: 0;
+}
+
+.install-steps-container {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.install-steps-heading {
+  font-size: 0.92rem;
+  font-weight: 700;
+  color: #cbd5e1;
+  margin: 0 0 0.15rem;
+}
+
+.install-step-card {
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 12px;
+  padding: 0.75rem 0.95rem;
+}
+
+.install-step-badge {
+  font-size: 0.78rem;
+  font-weight: 700;
+  color: #38bdf8;
+  margin-bottom: 0.4rem;
+}
+
+.install-step-list {
+  padding-left: 1.2rem;
+  margin: 0;
+  font-size: 0.83rem;
+  color: #cbd5e1;
+  line-height: 1.55;
+}
+
+.install-step-list strong {
+  color: #ffffff;
+}
+
+.install-app-footer {
+  padding-top: 0.5rem;
+}
+
+.install-got-it-btn {
+  width: 100%;
+  padding: 0.7rem;
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.08);
+  color: #e2e8f0;
+  font-size: 0.9rem;
+  font-weight: 600;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  cursor: pointer;
+  transition: all var(--transition-fast);
+}
+
+.install-got-it-btn:hover {
+  background: rgba(255, 255, 255, 0.14);
+  color: #ffffff;
+}
+
+/* --------------------------------------------------------
+   Print Optimization
+   -------------------------------------------------------- */
+@media print {
+  body {
+    background: #ffffff !important;
+    color: #000000 !important;
+  }
+  .top-action-bar,
+  .add-task-docked-container,
+  .task-star-btn,
+  .task-delete-circle-btn,
+  .icon-circle-btn,
+  .share-list-header-btn,
+  .drawer-backdrop,
+  .bottom-sheet-backdrop,
+  .list-options-sheet,
+  .share-list-sheet,
+  .suggestions-sheet,
+  .task-bottom-sheet,
+  .toast-notification {
+    display: none !important;
+  }
+  .task-item-card {
+    background: #ffffff !important;
+    border: 1px solid #e2e8f0 !important;
+    box-shadow: none !important;
+    page-break-inside: avoid;
+  }
+}
+
+/* --------------------------------------------------------
+   Crash Recovery Screen (ErrorBoundary fallback)
+   User Request: "jb problem ho to refresh krne se page vaps open ho jana chahiye or har page refresh hoga"
+   -------------------------------------------------------- */
+.crash-recovery-screen {
+  position: fixed;
+  inset: 0;
+  width: 100%;
+  height: 100dvh;
+  background-color: #0b0c10;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 1.5rem;
+  z-index: 999999;
+  font-family: var(--font-family, system-ui, sans-serif);
+  color: #f8fafc;
+  overflow: hidden;
+}
+
+.crash-recovery-card {
+  width: 100%;
+  max-width: 360px;
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  border-radius: 20px;
+  padding: 2rem 1.5rem;
+  text-align: center;
+  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.6);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+}
+
+.crash-recovery-icon {
+  width: 64px;
+  height: 64px;
+  border-radius: 50%;
+  background: rgba(56, 189, 248, 0.15);
+  border: 1.5px solid rgba(56, 189, 248, 0.35);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0 auto 1.25rem;
+  font-size: 1.8rem;
+}
+
+.crash-recovery-title {
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: #ffffff;
+  margin-bottom: 0.5rem;
+}
+
+.crash-recovery-desc {
+  font-size: 0.9rem;
+  color: #94a3b8;
+  line-height: 1.5;
+  margin-bottom: 1.5rem;
+}
+
+.crash-recovery-btn {
+  width: 100%;
+  padding: 0.85rem 1.25rem;
+  background: linear-gradient(135deg, #0284c7 0%, #2563eb 100%);
+  color: #ffffff;
+  font-weight: 600;
+  font-size: 0.95rem;
+  border-radius: 12px;
+  border: 1px solid rgba(255, 255, 255, 0.25);
+  cursor: pointer;
+  box-shadow: 0 4px 16px rgba(37, 99, 235, 0.4);
+  transition: transform 0.15s ease, filter 0.15s ease;
+}
+
+.crash-recovery-btn:hover {
+  filter: brightness(1.1);
+  transform: translateY(-1px);
+}
+
+.crash-recovery-btn:active {
+  transform: scale(0.98);
+}
