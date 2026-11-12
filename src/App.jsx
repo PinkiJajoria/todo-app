@@ -1204,16 +1204,19 @@ export default function App() {
 
   const getListSharePayload = () => {
     const shareUrl = getShareListUrl();
+    const isMyDay = !activeList || activeList === 'my-day' || (listTitle && listTitle.toLowerCase() === 'my day');
     const listObj = customLists.find(
       (c) =>
         (typeof c === 'object' ? c.id : c) === activeList ||
         getSafeListName(c) === listTitle
     );
-    const emoji = listObj ? getSafeListEmoji(listObj) : '';
+    const emoji = listObj ? getSafeListEmoji(listObj) : (isMyDay ? '☀️' : '');
     const formattedTitle = emoji ? `${emoji} ${listTitle}` : listTitle;
 
     // Direct clickable link on its own line: Ensures WhatsApp parses it as clickable hyperlink
-    const shareText = `Please join "${formattedTitle}", my shared list in My Day.\n\n${shareUrl}`;
+    const shareText = isMyDay
+      ? `Please check out My Day to manage your daily tasks and to-do lists.\n\n${shareUrl}`
+      : `Please join "${formattedTitle}", my shared list in My Day.\n\n${shareUrl}`;
 
     return {
       title: `${formattedTitle} - My Day`,
@@ -2955,6 +2958,19 @@ export default function App() {
                       aria-label="Suggestions"
                     >
                       <Lightbulb size={19} />
+                    </button>
+                  )}
+
+                  {/* Share Icon on My Day Main Page */}
+                  {activeList === 'my-day' && (
+                    <button
+                      type="button"
+                      className="icon-circle-btn"
+                      onClick={handleShareListLink}
+                      title="Share My Day"
+                      aria-label="Share"
+                    >
+                      <Share2 size={19} />
                     </button>
                   )}
 
