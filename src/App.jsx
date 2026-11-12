@@ -46,6 +46,7 @@ import {
 } from 'lucide-react';
 import confetti from 'canvas-confetti';
 import { playSound, warmupAudio } from './utils/sound';
+import { api } from './api';
 import './App.css';
 
 // SVG Icon for WhatsApp
@@ -1099,6 +1100,72 @@ export default function App() {
       }
     } catch { }
   }, [listMembers, userId, isPrimaryUser]);
+
+  // Background Cloud Sync & WebSocket Real-time Updates (when backend server is active)
+  useEffect(() => {
+    // 1. Register session
+    api.registerSession(userId, userEmail, userEmail);
+
+    // 2. Initial Cloud fetch & merge
+    const syncWithBackend = async () => {
+      const serverTasks = await api.getTasks(userId);
+      if (Array.isArray(serverTasks) && serverTasks.length > 0) {
+        setTasks((prev) => {
+          const map = new Map(prev.map((t) => [t.id, t]));
+          serverTasks.forEach((st) => map.set(st.id, st));
+          return Array.from(map.values());
+        });
+      }
+
+      const serverLists = await api.getLists(userId);
+      if (Array.isArray(serverLists) && serverLists.length > 0) {
+        setCustomLists((prev) => {
+          const map = new Map(prev.map((l) => [l.id, l]));
+          serverLists.forEach((sl) => map.set(sl.id, sl));
+          return Array.from(map.values());
+        });
+      }
+    };
+
+    syncWithBackend();
+
+    // 3. Connect WebSocket for live updates across devices
+    const disconnectWs = api.connectWebSocket((event) => {
+      if (!event || !event.type) return;
+
+      if (event.type === 'TASK_CREATED' && event.payload?.task) {
+        const newTask = event.payload.task;
+        setTasks((prev) => (prev.some((t) => t.id === newTask.id) ? prev : [newTask, ...prev]));
+      } else if (event.type === 'TASK_UPDATED' && event.payload?.task) {
+        const updated = event.payload.task;
+        setTasks((prev) => prev.map((t) => (t.id === updated.id ? { ...t, ...updated } : t)));
+      } else if (event.type === 'TASK_DELETED' && event.payload?.taskId) {
+        setTasks((prev) => prev.filter((t) => t.id !== event.payload.taskId));
+      } else if (event.type === 'LIST_CREATED' && event.payload?.list) {
+        const newList = event.payload.list;
+        setCustomLists((prev) => (prev.some((l) => l.id === newList.id) ? prev : [...prev, newList]));
+      } else if (event.type === 'LIST_UPDATED' && event.payload?.list) {
+        const updated = event.payload.list;
+        setCustomLists((prev) => prev.map((l) => (l.id === updated.id ? { ...l, ...updated } : l)));
+      } else if (event.type === 'LIST_DELETED' && event.payload?.listId) {
+        setCustomLists((prev) => prev.filter((l) => l.id !== event.payload.listId));
+      }
+    });
+
+    return () => {
+      disconnectWs();
+    };
+  }, [userId, userEmail]);
+
+  // Periodic debounce sync to backend
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      if (tasks.length > 0 || customLists.length > 0) {
+        api.syncAll(userId, { tasks, lists: customLists, email: userEmail, name: userEmail });
+      }
+    }, 1500);
+    return () => clearTimeout(timer);
+  }, [tasks, customLists, userId, userEmail]);
 
   const closeShareList = () => {
     setIsShareListClosing(true);
