@@ -33,7 +33,7 @@ tasksRouter.post('/', async (req, res) => {
       return res.status(401).json({ error: 'Unauthorized: missing x-user-id header' });
     }
 
-    const { id, title, completed, starred, list, listId, reminderTime, dueDate, note } = req.body;
+    const { id, title, completed, starred, list, listId, reminderTime, dueDate, note, priority, category, subtasks } = req.body;
     if (!title || !title.trim()) {
       return res.status(400).json({ error: 'Task title is required' });
     }
@@ -48,6 +48,9 @@ tasksRouter.post('/', async (req, res) => {
       reminderTime: reminderTime || null,
       dueDate: dueDate || null,
       note: note || '',
+      priority: priority || null,
+      category: category || null,
+      subtasks: Array.isArray(subtasks) ? subtasks : [],
       userId
     });
 

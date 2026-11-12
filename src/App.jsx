@@ -42,7 +42,12 @@ import {
   FolderPlus,
   MessageSquare,
   Mail,
-  Copy
+  Copy,
+  AlertCircle,
+  CheckSquare,
+  Square,
+  Tag,
+  SlidersHorizontal
 } from 'lucide-react';
 import confetti from 'canvas-confetti';
 import { playSound, warmupAudio } from './utils/sound';
@@ -105,6 +110,23 @@ const getSafeListEmoji = (item) => {
   if (!item || typeof item !== 'object') return null;
   if (typeof item.emoji === 'string' && item.emoji.trim()) return item.emoji.trim();
   return null;
+};
+
+// Check if task is overdue
+const isTaskOverdue = (task) => {
+  if (!task || task.completed) return false;
+  if (!task.dueDate) return false;
+  if (task.dueDate.timestamp) {
+    return task.dueDate.timestamp < Date.now();
+  }
+  const text = (typeof task.dueDate === 'string' ? task.dueDate : task.dueDate.text || '').toLowerCase();
+  if (text.includes('yesterday') || text.includes('overdue')) return true;
+  const parsed = Date.parse(text);
+  if (!isNaN(parsed)) {
+    const endOfDay = new Date(parsed).setHours(23, 59, 59, 999);
+    return endOfDay < Date.now();
+  }
+  return false;
 };
 
 // Initial pre-populated sample tasks
@@ -385,7 +407,8 @@ function SwipeableTaskItem({
   deleteTask,
   toggleTaskMyDay,
   isCompleting,
-  isExiting
+  isExiting,
+  onOpenDetail
 }) {
   const [swipeOffset, setSwipeOffset] = useState(0);
   const [isSwiping, setIsSwiping] = useState(false);
@@ -609,13 +632,44 @@ function SwipeableTaskItem({
             onClick={() => {
               if (swipeOffset < 0) {
                 setSwipeOffset(0);
+                return;
               }
+              onOpenDetail?.(task);
             }}
           >
             <span className={`task-name ${(task.completed || isCompleting) ? 'cut' : ''}`}>
               {task.title}
             </span>
             <div className="task-meta-badges">
+              {/* Priority Badge */}
+              {task.priority && (
+                <span className={`task-meta-tag priority-${task.priority.toLowerCase()}`}>
+                  {task.priority === 'High' ? '🔴' : task.priority === 'Medium' ? '🟡' : '🟢'} {task.priority}
+                </span>
+              )}
+
+              {/* Category Badge */}
+              {task.category && (
+                <span className="task-meta-tag category-badge">
+                  {task.category === 'Work' ? '💼' : task.category === 'Personal' ? '👤' : task.category === 'Fitness' ? '🏃' : task.category === 'Study' ? '📚' : '🏷️'} {task.category}
+                </span>
+              )}
+
+              {/* Subtasks Progress Badge */}
+              {Array.isArray(task.subtasks) && task.subtasks.length > 0 && (
+                <span className="task-meta-tag subtasks-badge">
+                  <CheckSquare size={11} />
+                  <span>{task.subtasks.filter((st) => st.completed).length}/{task.subtasks.length}</span>
+                </span>
+              )}
+
+              {/* Overdue Badge */}
+              {isTaskOverdue(task) && (
+                <span className="task-meta-tag overdue-badge">
+                  <AlertCircle size={11} /> Overdue
+                </span>
+              )}
+
               {/* Show parent list name (e.g. "Tasks" in the screenshot) */}
               {(task.list || 'Tasks') && activeList !== 'tasks' && activeList !== task.list && (
                 <span className="task-meta-tag list-name-badge">
@@ -808,7 +862,19 @@ export default function App() {
   const [taskDraftReminder, setTaskDraftReminder] = useState(null);
   const [taskDraftDue, setTaskDraftDue] = useState(null);
   const [taskDraftNote, setTaskDraftNote] = useState('');
+  const [taskDraftPriority, setTaskDraftPriority] = useState(null); // 'High' | 'Medium' | 'Low' | null
+  const [taskDraftCategory, setTaskDraftCategory] = useState(null); // 'Work' | 'Personal' | 'Fitness' | 'Study' | null
   const [taskToDelete, setTaskToDelete] = useState(null);
+
+  // Advanced Filter & Category states
+  const [statusFilter, setStatusFilter] = useState('all'); // 'all' | 'pending' | 'completed'
+  const [priorityFilter, setPriorityFilter] = useState('all'); // 'all' | 'high' | 'medium' | 'low'
+  const [categoryFilter, setCategoryFilter] = useState('all'); // 'all' | 'work' | 'personal' | 'fitness' | 'study'
+
+  // Task Detail Modal & Subtasks states
+  const [selectedDetailTaskId, setSelectedDetailTaskId] = useState(null);
+  const [isDetailSheetClosing, setIsDetailSheetClosing] = useState(false);
+  const [newSubtaskInput, setNewSubtaskInput] = useState('');
 
   // Task completion animation states (1s delay, tick sign, sound & confetti)
   const [completingTaskIds, setCompletingTaskIds] = useState(new Set());
@@ -1450,9 +1516,10 @@ export default function App() {
       isShareListOpen ||
       isShareAppsOpen ||
       taskSheet ||
-      isTaskInputActive
+      isTaskInputActive ||
+      selectedDetailTaskId
     );
-  }, [isSuggestionsOpen, isDrawerOpen, isListOptionsOpen, isInstallModalOpen, isShareListOpen, isShareAppsOpen, taskSheet, isTaskInputActive]);
+  }, [isSuggestionsOpen, isDrawerOpen, isListOptionsOpen, isInstallModalOpen, isShareListOpen, isShareAppsOpen, taskSheet, isTaskInputActive, selectedDetailTaskId]);
 
   useEffect(() => {
     const container = appContainerRef.current;
@@ -2122,6 +2189,9 @@ export default function App() {
       list: targetListName,
       addedToMyDay: taskDraftList === 'My Day' || isMyDayList,
       note: taskDraftNote || '',
+      priority: taskDraftPriority || null,
+      category: taskDraftCategory || null,
+      subtasks: [],
       createdAt: Date.now()
     };
 
@@ -2132,6 +2202,8 @@ export default function App() {
     setTaskDraftDue(null);
     setTaskDraftNote('');
     setTaskDraftList(null);
+    setTaskDraftPriority(null);
+    setTaskDraftCategory(null);
 
     if (keepOpen) {
       // Keep input active and re-focus so keyboard stays open
@@ -2152,6 +2224,69 @@ export default function App() {
       }
     }
     showToast(`Task added to ${targetListName}`);
+  };
+
+  // Task Detail Modal & Subtasks Handlers
+  const handleOpenTaskDetail = (task) => {
+    setSelectedDetailTaskId(task.id);
+    setIsDetailSheetClosing(false);
+  };
+
+  const handleCloseTaskDetail = () => {
+    setIsDetailSheetClosing(true);
+    setTimeout(() => {
+      setSelectedDetailTaskId(null);
+      setIsDetailSheetClosing(false);
+      setNewSubtaskInput('');
+    }, 240);
+  };
+
+  const handleToggleSubtask = (taskId, subtaskId) => {
+    setTasks((prev) =>
+      prev.map((t) => {
+        if (t.id !== taskId) return t;
+        const currentSubtasks = Array.isArray(t.subtasks) ? t.subtasks : [];
+        const updated = currentSubtasks.map((st) =>
+          st.id === subtaskId ? { ...st, completed: !st.completed } : st
+        );
+        return { ...t, subtasks: updated };
+      })
+    );
+  };
+
+  const handleAddSubtask = (taskId) => {
+    const title = newSubtaskInput.trim();
+    if (!title) return;
+    const newStep = {
+      id: `st-${Date.now()}-${Math.random().toString(36).substring(2, 5)}`,
+      title,
+      completed: false
+    };
+
+    setTasks((prev) =>
+      prev.map((t) => {
+        if (t.id !== taskId) return t;
+        const current = Array.isArray(t.subtasks) ? t.subtasks : [];
+        return { ...t, subtasks: [...current, newStep] };
+      })
+    );
+    setNewSubtaskInput('');
+  };
+
+  const handleDeleteSubtask = (taskId, subtaskId) => {
+    setTasks((prev) =>
+      prev.map((t) => {
+        if (t.id !== taskId) return t;
+        const current = Array.isArray(t.subtasks) ? t.subtasks : [];
+        return { ...t, subtasks: current.filter((st) => st.id !== subtaskId) };
+      })
+    );
+  };
+
+  const handleUpdateTaskField = (taskId, field, value) => {
+    setTasks((prev) =>
+      prev.map((t) => (t.id === taskId ? { ...t, [field]: value } : t))
+    );
   };
 
   const toggleTaskComplete = (taskId) => {
@@ -2547,16 +2682,34 @@ export default function App() {
     }, 180);
   };
 
-  // Filter tasks according to selected list
+  // Filter tasks according to selected list, search, status, priority & category
   const filteredTasks = tasks.filter((task) => {
-    // If search query is active, filter tasks by query
+    // 1. Search query filter
     if (taskSearchQuery.trim()) {
       const q = taskSearchQuery.toLowerCase().trim();
       const matchTitle = task.title && task.title.toLowerCase().includes(q);
       const matchNote = task.note && task.note.toLowerCase().includes(q);
-      if (!matchTitle && !matchNote) return false;
+      const matchPriority = task.priority && task.priority.toLowerCase().includes(q);
+      const matchCategory = task.category && task.category.toLowerCase().includes(q);
+      const matchSubtask = Array.isArray(task.subtasks) && task.subtasks.some((st) => st.title && st.title.toLowerCase().includes(q));
+      if (!matchTitle && !matchNote && !matchPriority && !matchCategory && !matchSubtask) return false;
     }
 
+    // 2. Priority Filter
+    if (priorityFilter !== 'all') {
+      if ((task.priority || '').toLowerCase() !== priorityFilter.toLowerCase()) return false;
+    }
+
+    // 3. Category Filter
+    if (categoryFilter !== 'all') {
+      if ((task.category || '').toLowerCase() !== categoryFilter.toLowerCase()) return false;
+    }
+
+    // 4. Status Filter
+    if (statusFilter === 'pending' && task.completed) return false;
+    if (statusFilter === 'completed' && !task.completed) return false;
+
+    // 5. Active List Filter
     if (activeList === 'starred' || activeList === 'Important') {
       return task.starred || task.list === 'Important' || task.list === 'starred';
     }
@@ -2974,6 +3127,17 @@ export default function App() {
                     </button>
                   )}
 
+                  {/* Theme Toggle Button (Light/Dark Mode) */}
+                  <button
+                    type="button"
+                    className="icon-circle-btn"
+                    onClick={toggleTheme}
+                    title={theme === 'dark' ? 'Switch to Light Mode' : 'Switch to Dark Mode'}
+                    aria-label="Toggle Theme"
+                  >
+                    {theme === 'dark' ? <Sun size={19} color="#fbbf24" /> : <Moon size={19} color="#38bdf8" />}
+                  </button>
+
                   {/* Share List Collaboration Icon (Hidden on My Day list) */}
                   {activeList !== 'my-day' && (
                     <button
@@ -3117,6 +3281,92 @@ export default function App() {
             )}
           </header>
 
+          {/* Advanced Filter, Search, Priority & Category Navigation Bar */}
+          <div className="task-filter-container">
+            {/* Real-time Search Input */}
+            <div className="task-filter-search-row">
+              <Search size={15} className="filter-search-icon" />
+              <input
+                type="text"
+                placeholder={`Search in ${listTitle}...`}
+                value={taskSearchQuery}
+                onChange={(e) => setTaskSearchQuery(e.target.value)}
+                className="filter-search-input"
+              />
+              {taskSearchQuery && (
+                <button
+                  type="button"
+                  className="filter-search-clear"
+                  onClick={() => setTaskSearchQuery('')}
+                  aria-label="Clear search"
+                >
+                  <X size={13} />
+                </button>
+              )}
+            </div>
+
+            {/* Status Tabs: All | Pending | Completed */}
+            <div className="task-filter-tabs">
+              <button
+                type="button"
+                className={`filter-tab-btn ${statusFilter === 'all' ? 'active' : ''}`}
+                onClick={() => setStatusFilter('all')}
+              >
+                All ({filteredTasks.length})
+              </button>
+              <button
+                type="button"
+                className={`filter-tab-btn ${statusFilter === 'pending' ? 'active' : ''}`}
+                onClick={() => setStatusFilter('pending')}
+              >
+                Pending ({activeTasks.length})
+              </button>
+              <button
+                type="button"
+                className={`filter-tab-btn ${statusFilter === 'completed' ? 'active' : ''}`}
+                onClick={() => setStatusFilter('completed')}
+              >
+                Completed ({completedTasks.length})
+              </button>
+            </div>
+
+            {/* Priority & Category Chips Row */}
+            <div className="task-filter-chips-row">
+              <span className="filter-chip-label">Priority:</span>
+              {['all', 'High', 'Medium', 'Low'].map((p) => (
+                <button
+                  key={p}
+                  type="button"
+                  className={`filter-chip-btn ${priorityFilter === p.toLowerCase() ? 'active' : ''}`}
+                  onClick={() => setPriorityFilter(priorityFilter === p.toLowerCase() && p !== 'all' ? 'all' : p.toLowerCase())}
+                >
+                  {p === 'High' && '🔴 '}
+                  {p === 'Medium' && '🟡 '}
+                  {p === 'Low' && '🟢 '}
+                  {p === 'all' ? 'All' : p}
+                </button>
+              ))}
+
+              <div className="filter-chip-divider" />
+
+              <span className="filter-chip-label">Category:</span>
+              {['all', 'Work', 'Personal', 'Fitness', 'Study'].map((c) => (
+                <button
+                  key={c}
+                  type="button"
+                  className={`filter-chip-btn ${categoryFilter === c.toLowerCase() ? 'active' : ''}`}
+                  onClick={() => setCategoryFilter(categoryFilter === c.toLowerCase() && c !== 'all' ? 'all' : c.toLowerCase())}
+                >
+                  {c === 'Work' && '💼 '}
+                  {c === 'Personal' && '👤 '}
+                  {c === 'Fitness' && '🏃 '}
+                  {c === 'Study' && '📚 '}
+                  {c === 'all' ? 'All' : c}
+                </button>
+              ))}
+            </div>
+          </div>
+
           {/* ----------------------------------------------------
           3. Main Scrollable Tasks Content Area
           ---------------------------------------------------- */}
@@ -3177,6 +3427,7 @@ export default function App() {
                       toggleTaskMyDay={toggleTaskMyDay}
                       isCompleting={completingTaskIds.has(task.id)}
                       isExiting={exitingTaskIds.has(task.id)}
+                      onOpenDetail={handleOpenTaskDetail}
                     />
                   ))}
                 </div>
@@ -3226,6 +3477,7 @@ export default function App() {
                         toggleTaskMyDay={toggleTaskMyDay}
                         isCompleting={false}
                         isExiting={false}
+                        onOpenDetail={handleOpenTaskDetail}
                       />
                     ))
                   )}
@@ -3386,10 +3638,23 @@ export default function App() {
                             <X size={12} className="chip-remove" onClick={(e) => { e.stopPropagation(); setTaskDraftNote(''); }} />
                           </span>
                         )}
+                        {taskDraftPriority && (
+                          <span className={`task-chip priority-${taskDraftPriority.toLowerCase()}`}>
+                            <span>{taskDraftPriority === 'High' ? '🔴' : taskDraftPriority === 'Medium' ? '🟡' : '🟢'} {taskDraftPriority}</span>
+                            <X size={12} className="chip-remove" onClick={(e) => { e.stopPropagation(); setTaskDraftPriority(null); }} />
+                          </span>
+                        )}
+                        {taskDraftCategory && (
+                          <span className="task-chip category">
+                            <Tag size={13} />
+                            <span>{taskDraftCategory}</span>
+                            <X size={12} className="chip-remove" onClick={(e) => { e.stopPropagation(); setTaskDraftCategory(null); }} />
+                          </span>
+                        )}
                       </div>
                     )}
 
-                    {/* 4 Options Toolbar */}
+                    {/* Options Toolbar */}
                     <div className="add-task-toolbar">
                       <div className="add-task-actions-group">
                         {/* 1. Select a list: Hut with tick icon (Opens Lists Drawer) */}
@@ -3450,6 +3715,46 @@ export default function App() {
                           aria-label="Add note"
                         >
                           <FileText size={19} />
+                        </button>
+
+                        {/* 5. Priority: Flag icon (cycles High, Medium, Low, None) */}
+                        <button
+                          type="button"
+                          className={`task-toolbar-btn ${taskDraftPriority ? 'selected' : ''}`}
+                          onMouseDown={(e) => e.preventDefault()}
+                          onClick={(e) => {
+                            e.preventDefault();
+                            e.stopPropagation();
+                            const priorities = [null, 'High', 'Medium', 'Low'];
+                            const curIdx = priorities.indexOf(taskDraftPriority);
+                            const next = priorities[(curIdx + 1) % priorities.length];
+                            setTaskDraftPriority(next);
+                            if (next) showToast(`Priority: ${next}`);
+                          }}
+                          title="Set priority (High, Medium, Low)"
+                          aria-label="Set priority"
+                        >
+                          <Flag size={19} color={taskDraftPriority === 'High' ? '#ef4444' : taskDraftPriority === 'Medium' ? '#f59e0b' : taskDraftPriority === 'Low' ? '#10b981' : 'currentColor'} />
+                        </button>
+
+                        {/* 6. Category: Tag icon (cycles Work, Personal, Fitness, Study, None) */}
+                        <button
+                          type="button"
+                          className={`task-toolbar-btn ${taskDraftCategory ? 'selected' : ''}`}
+                          onMouseDown={(e) => e.preventDefault()}
+                          onClick={(e) => {
+                            e.preventDefault();
+                            e.stopPropagation();
+                            const categories = [null, 'Work', 'Personal', 'Fitness', 'Study'];
+                            const curIdx = categories.indexOf(taskDraftCategory);
+                            const next = categories[(curIdx + 1) % categories.length];
+                            setTaskDraftCategory(next);
+                            if (next) showToast(`Category: ${next}`);
+                          }}
+                          title="Set category tag"
+                          aria-label="Set category"
+                        >
+                          <Tag size={19} color={taskDraftCategory ? '#818cf8' : 'currentColor'} />
                         </button>
                       </div>
                     </div>
@@ -4125,6 +4430,221 @@ export default function App() {
             </div>
           </>
         )}
+
+        {/* ----------------------------------------------------
+          Task Detail Modal / Sheet (Subtasks & Priority & Category)
+          ---------------------------------------------------- */}
+        {selectedDetailTaskId && (() => {
+          const detailTask = tasks.find((t) => t.id === selectedDetailTaskId);
+          if (!detailTask) return null;
+          const completedSubtasksCount = Array.isArray(detailTask.subtasks) ? detailTask.subtasks.filter((s) => s.completed).length : 0;
+          const totalSubtasksCount = Array.isArray(detailTask.subtasks) ? detailTask.subtasks.length : 0;
+          const percentDone = totalSubtasksCount > 0 ? Math.round((completedSubtasksCount / totalSubtasksCount) * 100) : 0;
+
+          return (
+            <>
+              <div
+                className={`bottom-sheet-backdrop ${isDetailSheetClosing ? 'closing' : ''}`}
+                onClick={handleCloseTaskDetail}
+              />
+              <div
+                className={`task-detail-sheet ${isDetailSheetClosing ? 'closing' : ''}`}
+                role="dialog"
+                aria-modal="true"
+                aria-label="Task Details"
+              >
+                <div className="sheet-drag-handle" />
+
+                <div className="task-detail-header">
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.65rem', flex: 1, minWidth: 0 }}>
+                    <button
+                      type="button"
+                      className={`task-tick-btn ${detailTask.completed ? 'checked' : ''}`}
+                      onClick={() => toggleTaskComplete(detailTask.id)}
+                      title={detailTask.completed ? 'Mark uncompleted' : 'Mark completed'}
+                    >
+                      {detailTask.completed && <Check size={13} strokeWidth={3.5} />}
+                    </button>
+                    <input
+                      type="text"
+                      className="task-detail-title-input"
+                      value={detailTask.title}
+                      onChange={(e) => handleUpdateTaskField(detailTask.id, 'title', e.target.value)}
+                      placeholder="Task title"
+                    />
+                  </div>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.35rem', flexShrink: 0 }}>
+                    <button
+                      type="button"
+                      className={`task-star-btn ${detailTask.starred ? 'starred' : ''}`}
+                      onClick={(e) => toggleTaskStar(detailTask.id, e)}
+                      title={detailTask.starred ? 'Unstar task' : 'Star task'}
+                    >
+                      <Star size={18} fill={detailTask.starred ? '#eab308' : 'none'} color={detailTask.starred ? '#eab308' : '#94a3b8'} />
+                    </button>
+                    <button
+                      type="button"
+                      className="drawer-icon-btn"
+                      onClick={handleCloseTaskDetail}
+                      title="Close"
+                      aria-label="Close"
+                    >
+                      <X size={20} />
+                    </button>
+                  </div>
+                </div>
+
+                <div className="task-detail-scrollable">
+                  {/* 1. Subtasks / Checklist Section */}
+                  <div className="subtasks-section">
+                    <div className="subtasks-header">
+                      <span>
+                        Checklist / Steps ({completedSubtasksCount}/{totalSubtasksCount})
+                      </span>
+                      {totalSubtasksCount > 0 && (
+                        <span style={{ fontSize: '0.78rem', color: '#38bdf8' }}>
+                          {percentDone}% done
+                        </span>
+                      )}
+                    </div>
+
+                    {totalSubtasksCount > 0 && (
+                      <div className="subtasks-progress-bar-wrap">
+                        <div
+                          className="subtasks-progress-bar-fill"
+                          style={{ width: `${percentDone}%` }}
+                        />
+                      </div>
+                    )}
+
+                    <div className="subtask-items-list">
+                      {Array.isArray(detailTask.subtasks) && detailTask.subtasks.map((step) => (
+                        <div key={step.id} className="subtask-item-row">
+                          <button
+                            type="button"
+                            className="subtask-checkbox"
+                            onClick={() => handleToggleSubtask(detailTask.id, step.id)}
+                            title={step.completed ? 'Mark step incomplete' : 'Mark step complete'}
+                          >
+                            {step.completed ? <CheckSquare size={17} /> : <Square size={17} color="#64748b" />}
+                          </button>
+                          <span className={`subtask-title-text ${step.completed ? 'completed' : ''}`}>
+                            {step.title}
+                          </span>
+                          <button
+                            type="button"
+                            className="subtask-delete-btn"
+                            onClick={() => handleDeleteSubtask(detailTask.id, step.id)}
+                            title="Delete step"
+                          >
+                            <Trash2 size={14} />
+                          </button>
+                        </div>
+                      ))}
+                    </div>
+
+                    <form
+                      onSubmit={(e) => {
+                        e.preventDefault();
+                        handleAddSubtask(detailTask.id);
+                      }}
+                      className="subtask-add-row"
+                    >
+                      <input
+                        type="text"
+                        className="subtask-add-input"
+                        placeholder="+ Add next step..."
+                        value={newSubtaskInput}
+                        onChange={(e) => setNewSubtaskInput(e.target.value)}
+                      />
+                      <button type="submit" className="subtask-add-btn">
+                        Add
+                      </button>
+                    </form>
+                  </div>
+
+                  {/* 2. Priority Selection */}
+                  <div>
+                    <div className="detail-section-label">Priority Level</div>
+                    <div className="detail-chips-selector">
+                      {[
+                        { label: '🔴 High', val: 'High' },
+                        { label: '🟡 Medium', val: 'Medium' },
+                        { label: '🟢 Low', val: 'Low' },
+                        { label: '⚪ None', val: null }
+                      ].map((item) => (
+                        <button
+                          key={item.label}
+                          type="button"
+                          className={`detail-choice-chip ${(detailTask.priority || null) === item.val ? 'active' : ''}`}
+                          onClick={() => handleUpdateTaskField(detailTask.id, 'priority', item.val)}
+                        >
+                          {item.label}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* 3. Category Tag Selection */}
+                  <div>
+                    <div className="detail-section-label">Category Tag</div>
+                    <div className="detail-chips-selector">
+                      {[
+                        { label: '💼 Work', val: 'Work' },
+                        { label: '👤 Personal', val: 'Personal' },
+                        { label: '🏃 Fitness', val: 'Fitness' },
+                        { label: '📚 Study', val: 'Study' },
+                        { label: 'None', val: null }
+                      ].map((item) => (
+                        <button
+                          key={item.label}
+                          type="button"
+                          className={`detail-choice-chip ${(detailTask.category || null) === item.val ? 'active' : ''}`}
+                          onClick={() => handleUpdateTaskField(detailTask.id, 'category', item.val)}
+                        >
+                          {item.label}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* 4. Notes Textarea */}
+                  <div>
+                    <div className="detail-section-label">Notes</div>
+                    <textarea
+                      className="detail-notes-textarea"
+                      placeholder="Add detailed notes or information for this task..."
+                      value={detailTask.note || ''}
+                      onChange={(e) => handleUpdateTaskField(detailTask.id, 'note', e.target.value)}
+                    />
+                  </div>
+
+                  {/* 5. Footer Actions */}
+                  <div className="task-detail-actions">
+                    <button
+                      type="button"
+                      className="task-detail-delete-btn"
+                      onClick={(e) => {
+                        deleteTask(detailTask.id, e);
+                        handleCloseTaskDetail();
+                      }}
+                    >
+                      <Trash2 size={15} />
+                      <span>Delete Task</span>
+                    </button>
+                    <button
+                      type="button"
+                      className="task-detail-save-btn"
+                      onClick={handleCloseTaskDetail}
+                    >
+                      Done
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </>
+          );
+        })()}
 
         {/* ----------------------------------------------------
           Share List Bottom Sheet (Exact Match to User Screenshot)

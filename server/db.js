@@ -297,6 +297,9 @@ export const db = {
       reminderTime: task.reminderTime || null,
       dueDate: task.dueDate || null,
       note: task.note || '',
+      priority: task.priority || null,
+      category: task.category || null,
+      subtasks: Array.isArray(task.subtasks) ? task.subtasks : [],
       userId: task.userId,
       createdAt: task.createdAt || Date.now(),
       updatedAt: Date.now()
