@@ -970,14 +970,9 @@ export default function App() {
   };
 
   const getShareListUrl = () => {
-    let origin = window.location.origin;
-    // When sharing from localhost on developer machine, replace with LAN IP so phone/WhatsApp can open it!
-    if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
-      origin = `${window.location.protocol}//192.168.1.19:${window.location.port || '5173'}`;
-    }
-    const pathname = window.location.pathname || '/';
-    // Clean, direct URL that WhatsApp's parser highlights 100% reliably as a blue link
-    return `${origin}${pathname}?list=${encodeURIComponent(listTitle)}`;
+    // Live GitHub Pages production URL - Accessible anywhere in the world!
+    const GITHUB_PAGES_BASE = 'https://pinkijajoria.github.io/todo-app/';
+    return `${GITHUB_PAGES_BASE}?list=${encodeURIComponent(listTitle)}`;
   };
 
   const getListSharePayload = () => {
